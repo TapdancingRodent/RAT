@@ -111,7 +111,6 @@ class riftChatBot:
 						
 					# Return it if we do
 					if table:
-						print table
 						if (table['type'] == 'GuildChat' or table['type'] == 'WhisperChat') and table['value']['message'][0] == '!':
 							# Populate a request object
 							req = riftChatRequest()
