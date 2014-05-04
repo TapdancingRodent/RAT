@@ -1,4 +1,3 @@
-#!/c/python27/python.exe
 import riftChatBotUtils
 
 # Returns the user's input string

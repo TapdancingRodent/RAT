@@ -1,4 +1,3 @@
-#!/c/python27/python.exe
 import sys
 import xml.etree.ElementTree as ET
 import sqlite3
@@ -7,7 +6,7 @@ language = 'English'
 if not language in {'English', 'French', 'German'}:
 	sys.exit('Invalid language specified')
 
-discFolder = './Discoveries/'
+discFolder = './'
 db = sqlite3.connect('discoveries.db')
 db.row_factory = sqlite3.Row
 cursor = db.cursor()

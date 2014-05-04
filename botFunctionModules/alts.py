@@ -1,4 +1,3 @@
-#!/c/python27/python.exe
 import riftChatBotUtils
 
 # !alts is basically an alias for !alts list

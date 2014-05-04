@@ -1,4 +1,3 @@
-#!/c/python27/python.exe
 import sys, pkgutil, shlex, os
 import riftChatBotUtils, botFunctionModules
 

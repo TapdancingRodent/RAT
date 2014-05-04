@@ -1,4 +1,3 @@
-#!/c/python27/python.exe
 import socket
 import requests
 import json

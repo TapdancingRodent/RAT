@@ -1,4 +1,3 @@
-#!/c/python27/python.exe
 import riftChatBotUtils
 import operator as op, ast
 
