@@ -83,7 +83,6 @@ if __name__ == "__main__":
 		req = bot.getRequest()
 		if req:
 			numRetries = 0
-			print 'Recieved message: ' + req.message
 			
 			# Parse the request
 			lex = shlex.shlex(req.message)
