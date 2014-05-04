@@ -239,7 +239,7 @@ def bot_timers_trigger(riftBot, timerId):
 		if timerInfo['sendGuild'] == 1:
 			req.toGuild = True
 		req.toWhisp = True
-		req.response += ['Timer %i: %s' % (timer['timerId'], timer['message'])]
+		req.response += ['Timer %i: %s' % (timerInfo['timerId'], timerInfo['message'])]
 		
 		# Remove the timer from the database
 		cursor.execute("DELETE FROM timers WHERE timerId=?", (timerId,))
