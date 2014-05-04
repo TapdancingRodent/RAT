@@ -12,7 +12,7 @@ This will log into Rift Mobile over HTTPS and begin listening for commands on gu
 ** N.B. Items are stored in a database named discoveries.db which is created from Trion's published discoveries database (available at ftp://ftp.trionworlds.com/rift/data/) using the included parseDiscoveries.py
 * !roll - Generate random integers
 * !timers - Schedule chat alerts
-	
+
 Requirements:  
 * python 2.7+
 * python requests module
