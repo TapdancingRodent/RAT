@@ -161,17 +161,28 @@ class riftChatBot:
 		return DB
 			
 	def appendTimer(self, timerId, timer):
-		if self.timers:
+		timerAdded = False
+		try:
 			if self.timers[timerId]:
-				raise TimerError('Timer exists with index %i' % timerId)
-			else:
-				self.timers[timerId] = timer
+				pass
+		
+		except KeyError:
+			self.timers[timerId] = timer
+			timerAdded = True
+		
+		return timerAdded
 				
 	def removeTimer(self, timerId):
 		timerRemoved = False
-		if self.timers[timerId]:
+		try:
 			self.timers[timerId].cancel()
 			del self.timers[timerId]
 			timerRemoved = True
+			
+		except KeyError:
+			pass
+			
+		except AttributeError:
+			pass
 		
-		return timersRemoved
+		return timerRemoved

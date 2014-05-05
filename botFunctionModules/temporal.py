@@ -130,10 +130,11 @@ def bot_timers_add(riftBot, req):
 			DB.commit()
 			
 			# Set the timer and store it
-			timer = threading.Timer(countdown.total_seconds(), bot_timers_trigger, [riftBot, timerId]).start()
-			riftBot.appendTimer(timerId, timer)
-			
+			timer = threading.Timer(countdown.total_seconds(), bot_timers_trigger, [riftBot, timerId])
+			timer.start()
 			req.response += ['timer with id %i due in %0.0fs' % (timerId, countdown.total_seconds())]
+			if not riftBot.appendTimer(timerId, timer):
+				req.response += ['Error: this timer is uninterruptible!']
 	
 		DB.close()
 		
@@ -160,7 +161,7 @@ def bot_timers_remove(riftBot, req):
 		# Get a list of timers this user owns
 		timers = cursor.execute("SELECT timerId FROM timers WHERE player=?", (req.requester,)).fetchall()
 		playerTimers = [timer['timerId'] for timer in timers]
-		for arg in argList:
+		for arg in req.argList:
 			# Get the timer the user specified
 			timer = cursor.execute("SELECT * FROM timers WHERE timerId=?", (int(arg),)).fetchone()
 			if timer:
@@ -170,9 +171,11 @@ def bot_timers_remove(riftBot, req):
 						cursor.execute("DELETE FROM timers WHERE timerId=?", (int(arg),))
 						if cursor.rowcount > 0 and riftBot.removeTimer(int(arg)):
 							req.response += ['Timer %s removed' % arg]
+							DB.commit()
 							
 						else:
 							req.response += ['Error: Removal of timer %s failed' % arg]
+							DB.rollback()
 							
 					else:
 						req.response += ['%s does not own timer %s' % (req.requester.title(), arg)]
