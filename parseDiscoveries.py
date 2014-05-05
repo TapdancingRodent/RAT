@@ -18,10 +18,12 @@ def unzip(source_filename, dest_dir):
                 path = os.path.join(path, word)
             zf.extract(member, path)
 
+# Set to local language
 language = 'English'
 if not language in {'English', 'French', 'German'}:
 	sys.exit('Invalid language specified')
 
+# Check if there is a new database available and download it
 print 'Connecting to trion database...'
 trionServer = ftplib.FTP('ftp.trionworlds.com')
 trionServer.login()
@@ -45,12 +47,12 @@ repo.close()
 print 'Extracting discoveries...'
 unzip('./%s' % fileName, './')
 
+# Open a local database and initialise the tables
 db = sqlite3.connect('tmp.db')
 db.row_factory = sqlite3.Row
 cursor = db.cursor()
 
 print 'Parsing items...'
-# Process the Items discoveries xml file
 cursor.execute("DROP TABLE IF EXISTS Items")
 cursor.execute("DROP TABLE IF EXISTS ItemStats")
 cursor.execute("DROP TABLE IF EXISTS ItemCallings")
@@ -62,6 +64,7 @@ cursor.execute("CREATE TABLE ItemCallings (ItemKey VARCHAR(30) PRIMARY KEY, Warr
 cursor.execute("CREATE TABLE ItemSets (ItemKey VARCHAR(30), Pieces INT, Bonus VARCHAR(50))")
 db.commit()
 
+# Process the Items discoveries xml file
 xmlTree = ET.iterparse('./Items.xml', events=("start", "end"))
 xmlTree = iter(xmlTree)
 event, Items = xmlTree.next()
@@ -71,15 +74,17 @@ for event, item in xmlTree:
 		if item.find('ItemKey') is None:
 			continue
 		
+		# Ignore crafted items with augments
 		if item.find('IsAugmented').text == 1 or item.find('IsAugmented').text == "True":
 			continue
-			
+		
 		ItemKey = item.find('ItemKey').text
 		itemQuery = "INSERT INTO Items (ItemKey"
 		itemValue = (ItemKey,)
 			
 		print 'Parsing ' + ItemKey + '...'
-			
+		
+		# Get a bunch of useful (but not always present) information
 		if item.find('Armor') is not None:
 			itemQuery += ", Armor"
 			itemValue += (item.find('Armor').text,)
@@ -157,15 +162,15 @@ for event, item in xmlTree:
 			itemQuery += ", Slot"
 			itemValue += (item.find('Slot').text,)
 			
+		# Write a new row to the database
 		itemQuery += ") VALUES (?" + ",?".join(['' for _ in range(1, len(itemValue)+1)]) + ")"
 		cursor.execute(itemQuery, itemValue)
 		
+		# Cull the parse tree to prevent it ballooning in memory
 		Items.clear()
-	
-db.commit()
 
 print 'Parsing recipes...'
-# Process the Recipes discoveries xml file
+# Initialise the tables
 cursor.execute("DROP TABLE IF EXISTS Recipes")
 cursor.execute("DROP TABLE IF EXISTS Ingredients")
 
@@ -173,6 +178,7 @@ cursor.execute("CREATE TABLE Recipes (RecipeKey VARCHAR(30) PRIMARY KEY, Name VA
 cursor.execute("CREATE TABLE Ingredients (RecipeKey VARCHAR(30), ItemKey VARCHAR(30), Name VARCHAR(50), Quantity INT)")
 db.commit()
 
+# Process the Recipes discoveries xml file
 xmlTree = ET.iterparse('./Recipes.xml', events=("start", "end"))
 xmlTree = iter(xmlTree)
 event, Recipes = xmlTree.next()
@@ -185,6 +191,7 @@ for event, recipe in xmlTree:
 		RecipeKey = recipe.find('Id').text
 		print 'Parsing ' + RecipeKey + '...'
 		
+		# Read the information
 		ItemKey = recipe.find("Creates").find("Item").find("ItemKey").text
 		cursor.execute("UPDATE Items SET Craftable=1 WHERE ItemKey=?", (ItemKey,))
 		
@@ -212,16 +219,20 @@ for event, recipe in xmlTree:
 		recipeQuery += ") VALUES (?" + ",?".join(['' for _ in range(1, len(recipeValue)+1)]) + ")"
 		cursor.execute(recipeQuery, recipeValue)
 		
+		# Cull the parse tree to prevent it ballooning in memory
 		Recipes.clear()
-	
+
+# Write to the HDD
 db.commit()
 db.close()
 
+# Remember that we've updated the database
 with open("./oldRepo.txt", 'w+') as oldRepo:
 	oldRepo.write(fileName)
 
 os.remove('./%s' % fileName)
 
+# Swap out the old database for the new
 if os.path.exists('discoveries.db'):
 	oldDBinUse = True
 	while oldDBinUse:
