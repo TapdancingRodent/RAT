@@ -4,10 +4,8 @@ import datetime, threading
 # Warn guildmates that CQ is about to end
 def bot_cq(riftBot, req):
 	req.argList = ['3m30s', 'CQ ending soon']
-	req.fromGuild = True
-	req.fromWhisp = False
 	
-	return bot_timer_add(riftBot, req)
+	return bot_timers_add(riftBot, req)
 
 # Output server date
 def bot_date(riftBot, req):
@@ -72,13 +70,13 @@ def bot_timers_add(riftBot, req):
 				h,m,s = [0,0,0]
 				try:
 					for n, c in enumerate(timeStr):
-						if c == 'h':
+						if c in ['h', 'H']:
 							h = int(timeStr[0:n])
 							timeStr = timeStr[n:]
-						elif c == 'm':
+						elif c in ['m', 'M']:
 							m = int(timeStr[0:n])
 							timeStr = timeStr[n:]
-						elif c == 's':
+						elif c in ['s', 'S']:
 							print timeStr[0:n]
 							s = int(timeStr[0:n])
 							timeStr = timeStr[n:]
