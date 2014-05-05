@@ -126,7 +126,7 @@ def bot_timers_add(riftBot, req):
 				
 			# Register the timer in the database
 			alertToGuild = (1 if req.toGuild else 0)
-			cursor.execute("INSERT INTO timers VALUES (?,?,?,?,?)", (timerId, req.requesterId, req.requester, alertToGuild, ' '.join(req.argList[1:])))
+			cursor.execute("INSERT INTO timers VALUES (?,?,?,?,?)", (timerId, req.requester, req.requesterId, alertToGuild, ' '.join(req.argList[1:])))
 			DB.commit()
 			
 			# Set the timer and store it
@@ -272,7 +272,6 @@ __botFunctions__ = {
 	'cq'	: (bot_cq, [], "Alias for !timer 3m30s CQ ending soon"),
 	'date'	: (bot_date, [], "Print server date"),
 	'time'	: (bot_time, [], "Print server time"),
-	'timer'	: (bot_timers_add, [], "Alias for !timers add"),
 	'timers': (bot_timers, __timers_options__, "Schedule / manage chat alerts")
 	}
 	
