@@ -135,7 +135,7 @@ def bot_timers_add(riftBot, req):
 			timer = threading.Timer(countdown.total_seconds(), bot_timers_trigger, [riftBot, timerId])
 			timer.daemon = True
 			timer.start()
-			req.response += ['timer with id %i due in %0.0fs' % (timerId, countdown.total_seconds())]
+			req.response += ['timer with ID %i due in %0.0fs' % (timerId, countdown.total_seconds())]
 			if not riftBot.appendTimer(timerId, timer):
 				req.response += ['Error: this timer is uninterruptible!']
 	

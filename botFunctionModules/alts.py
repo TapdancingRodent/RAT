@@ -254,13 +254,13 @@ def bot_is(riftBot, req):
 			if pS == 2:
 				req.response += ['%s is online' % players[p].title()]
 				
-			elif altsOnline[0]:
+			elif altsOnline and altsOnline[0]:
 				req.response += ['%s is online as %s' % (players[p].title(), altsOnline[0].title())]
 			
 			elif pS == 1:
 				req.response += ['%s is on mobile' % players[p].title()]
 				
-			elif altsMobile[0]:
+			elif altsMobile and altsMobile[0]:
 				req.response += ['%s is on mobile as %s' % (players[p].title(), altsOnline[0].title())]
 				
 			else:
