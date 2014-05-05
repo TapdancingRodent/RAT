@@ -1,13 +1,51 @@
-import sys
+import sys, zipfile, os
+import ftplib
 import xml.etree.ElementTree as ET
 import sqlite3
+
+# Unzipping method courtesy of Stack Overflow's phihag
+def unzip(source_filename, dest_dir):
+    with zipfile.ZipFile(source_filename) as zf:
+        for member in zf.infolist():
+            # Path traversal defense copied from
+            # http://hg.python.org/cpython/file/tip/Lib/http/server.py#l789
+            words = member.filename.split('/')
+            path = dest_dir
+            for word in words[:-1]:
+                drive, word = os.path.splitdrive(word)
+                head, word = os.path.split(word)
+                if word in (os.curdir, os.pardir, ''): continue
+                path = os.path.join(path, word)
+            zf.extract(member, path)
 
 language = 'English'
 if not language in {'English', 'French', 'German'}:
 	sys.exit('Invalid language specified')
 
-discFolder = './'
-db = sqlite3.connect('discoveries.db')
+print 'Connecting to trion database...'
+trionServer = ftplib.FTP('ftp.trionworlds.com')
+trionServer.login()
+trionServer.cwd('/rift/data')
+files = trionServer.nlst()
+for fileName in files:
+	if "Rift_Discoveries_" in fileName:
+		break
+
+with open("./oldRepo.txt", 'r+') as oldRepo:
+	for line in oldRepo:
+		if line == fileName:
+			print 'Local database is up to date'
+			sys.exit()
+
+print 'Downloading %s...' % fileName
+repo = open(fileName, 'wb+')
+trionServer.retrbinary('RETR %s' % fileName, repo.write)
+repo.close()
+
+print 'Extracting discoveries...'
+unzip('./%s' % fileName, './')
+
+db = sqlite3.connect('tmp.db')
 db.row_factory = sqlite3.Row
 cursor = db.cursor()
 
@@ -24,7 +62,7 @@ cursor.execute("CREATE TABLE ItemCallings (ItemKey VARCHAR(30) PRIMARY KEY, Warr
 cursor.execute("CREATE TABLE ItemSets (ItemKey VARCHAR(30), Pieces INT, Bonus VARCHAR(50))")
 db.commit()
 
-xmlTree = ET.iterparse(discFolder + 'Items.xml', events=("start", "end"))
+xmlTree = ET.iterparse('./Items.xml', events=("start", "end"))
 xmlTree = iter(xmlTree)
 event, Items = xmlTree.next()
 
@@ -72,7 +110,6 @@ for event, item in xmlTree:
 				elif calling.text == "Mage":
 					MageUsable = 1
 			cursor.execute("INSERT INTO ItemCallings VALUES (?,?,?,?,?)", (ItemKey, WarriorUsable, ClericUsable, RogueUsable, MageUsable))
-			db.commit()
 			
 		if item.find('Cooldown') is not None:
 			itemQuery += ", Cooldown"
@@ -91,7 +128,6 @@ for event, item in xmlTree:
 					pieces = entry.find('RequiredPieces').text
 					bonus = entry.find('Description').find('English').text
 					cursor.execute("INSERT INTO ItemSets VALUES (?,?,?)", (ItemKey, pieces, bonus))
-			db.commit()
 			
 		if item.find('Name') is not None and item.find('Name').find(language) is not None:
 			itemQuery += ", Name"
@@ -100,7 +136,6 @@ for event, item in xmlTree:
 		if item.find('OnEquip') is not None:
 			for stat in item.find('OnEquip')._children:
 				cursor.execute("INSERT INTO ItemStats VALUES (?,?,?)", (ItemKey, stat.tag, stat.text))
-			db.commit()
 			
 		if item.find('OnUse') is not None:
 			if item.find('OnUse').find('Ability') is not None:
@@ -109,7 +144,6 @@ for event, item in xmlTree:
 			elif item.find('OnUse').find('Tooltip') is not None:
 				itemQuery += ", OnUse"
 				itemValue += (item.find('OnUse').find('Tooltip').find(language).text,)
-			db.commit()
 			
 		if item.find('Rarity') is not None:
 			itemQuery += ", Rarity"
@@ -125,9 +159,10 @@ for event, item in xmlTree:
 			
 		itemQuery += ") VALUES (?" + ",?".join(['' for _ in range(1, len(itemValue)+1)]) + ")"
 		cursor.execute(itemQuery, itemValue)
-		db.commit()
 		
 		Items.clear()
+	
+db.commit()
 
 print 'Parsing recipes...'
 # Process the Recipes discoveries xml file
@@ -138,7 +173,7 @@ cursor.execute("CREATE TABLE Recipes (RecipeKey VARCHAR(30) PRIMARY KEY, Name VA
 cursor.execute("CREATE TABLE Ingredients (RecipeKey VARCHAR(30), ItemKey VARCHAR(30), Name VARCHAR(50), Quantity INT)")
 db.commit()
 
-xmlTree = ET.iterparse(discFolder + 'Recipes.xml', events=("start", "end"))
+xmlTree = ET.iterparse('./Recipes.xml', events=("start", "end"))
 xmlTree = iter(xmlTree)
 event, Recipes = xmlTree.next()
 
@@ -152,7 +187,6 @@ for event, recipe in xmlTree:
 		
 		ItemKey = recipe.find("Creates").find("Item").find("ItemKey").text
 		cursor.execute("UPDATE Items SET Craftable=1 WHERE ItemKey=?", (ItemKey,))
-		db.commit()
 		
 		Quantity = recipe.find("Creates").find("Item").find("Quantity").text
 		Name = recipe.find("Name").find(language).text
@@ -166,7 +200,6 @@ for event, recipe in xmlTree:
 				cursor.execute("SELECT Name FROM Items WHERE ItemKey=?", (ItemKey,))
 				Name = cursor.fetchone()['Name']
 				cursor.execute("INSERT INTO Ingredients VALUES (?,?,?,?)", (RecipeKey, ItemKey, Name, Quantity))
-			db.commit()
 			
 		if recipe.find('RequiredSkill') is not None:
 			recipeQuery += ", RequiredSkill"
@@ -178,7 +211,24 @@ for event, recipe in xmlTree:
 			
 		recipeQuery += ") VALUES (?" + ",?".join(['' for _ in range(1, len(recipeValue)+1)]) + ")"
 		cursor.execute(recipeQuery, recipeValue)
-		db.commit()
 		
 		Recipes.clear()
-		
+	
+db.commit()
+db.close()
+
+with open("./oldRepo.txt", 'w+') as oldRepo:
+	oldRepo.write(fileName)
+
+os.remove('./%s' % fileName)
+
+if os.path.exists('discoveries.db'):
+	oldDBinUse = True
+	while oldDBinUse:
+		try:
+			os.remove('discoveries.db')
+			oldDBinUse = False
+		except WindowsError:
+			pass
+
+os.rename('./tmp.db', './discoveries.db')
