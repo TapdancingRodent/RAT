@@ -59,6 +59,8 @@ def bot_timers_add(riftBot, req):
 		dtdt = datetime.datetime
 		now = dtdt.utcnow()
 		
+		countdown = ''
+		
 		# Process the user's input from one of two formats
 		timeStr = req.argList[0]
 		if any([c in ['h','m','s'] for c in timeStr]):
@@ -69,16 +71,19 @@ def bot_timers_add(riftBot, req):
 			else:
 				h,m,s = [0,0,0]
 				try:
-					for n, c in enumerate(timeStr):
+					n1 = 0
+					for n2, c in enumerate(timeStr):
 						if c in ['h', 'H']:
-							h = int(timeStr[0:n])
-							timeStr = timeStr[(n+1):]
+							h = int(timeStr[n1:n2])
+							n1 = n2+1
+							
 						elif c in ['m', 'M']:
-							m = int(timeStr[0:n])
-							timeStr = timeStr[(n+1):]
+							m = int(timeStr[n1:n2])
+							n1 = n2+1
+							
 						elif c in ['s', 'S']:
-							s = int(timeStr[0:n])
-							timeStr = timeStr[(n+1):]
+							s = int(timeStr[n1:n2])
+							n1 = n2+1
 						
 					countdown = datetime.timedelta(hours=h, minutes=m, seconds=s)
 				
