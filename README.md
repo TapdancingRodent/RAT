@@ -1,4 +1,4 @@
-RAT - Rift Assistance Tool
+RAT - Rift Assistance Toolbox
 ===========
 
 A utility bot for Rift which serves requests over the Rift Mobile HTTP interface
