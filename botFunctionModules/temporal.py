@@ -72,14 +72,13 @@ def bot_timers_add(riftBot, req):
 					for n, c in enumerate(timeStr):
 						if c in ['h', 'H']:
 							h = int(timeStr[0:n])
-							timeStr = timeStr[n:]
+							timeStr = timeStr[(n+1):]
 						elif c in ['m', 'M']:
 							m = int(timeStr[0:n])
-							timeStr = timeStr[n:]
+							timeStr = timeStr[(n+1):]
 						elif c in ['s', 'S']:
-							print timeStr[0:n]
 							s = int(timeStr[0:n])
-							timeStr = timeStr[n:]
+							timeStr = timeStr[(n+1):]
 						
 					countdown = datetime.timedelta(hours=h, minutes=m, seconds=s)
 				
