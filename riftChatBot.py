@@ -86,7 +86,7 @@ __botFunctions__ = {
 
 if __name__ == "__main__":
 	# Some basic validation
-	if len(sys.argv) != 4:
+	if len(sys.argv) < 4:
 		sys.exit('Please supply a username, password and character name')
 		
 	# import all the bot functions found in the botFunctionModules folder
@@ -103,10 +103,16 @@ if __name__ == "__main__":
 	charName = sys.argv[3].lower()
 
 	# Initialise a chat bot
-	bot = riftChatBotUtils.riftChatBot()
-	bot.login(username, password, charName)
+	if len(sys.argv) == 5:
+		locale = sys.argv[4]
+		bot = riftChatBotUtils.riftChatBot(locale)
+	else:
+		bot = riftChatBotUtils.riftChatBot()
+	if bot.login(username, password, charName):
+		sys.exit('Unexpected login error, aborting...')
 	
 	# Initialise the database
+	print 'Initialising databases...'
 	DB = bot.dbConnect()
 	cursor = DB.cursor()
 	cursor.execute("CREATE TABLE IF NOT EXISTS alts (player VARCHAR(30) PRIMARY KEY, altGroup INT)")

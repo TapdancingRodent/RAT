@@ -7,8 +7,7 @@ import sqlite3
 import xml.sax.saxutils as saxy
 import shlex
 
-authURL = 'https://auth.trionworlds.com:443'
-chatURL = 'https://chat-eu.riftgame.com:443'
+defaultLocale = 'eu'
 
 class DatabaseError(Exception):
 	pass
@@ -31,7 +30,9 @@ class riftChatRequest:
 		self.response = []
 	
 class riftChatBot:
-	def __init__(self):
+	def __init__(self, locale=defaultLocale):
+		self.authURL = 'https://auth.trionworlds.com:443'
+		self.chatURL = 'https://chat-%s.riftgame.com:443' % locale
 		self.charName = ""
 		self.charID = ""
 		self.ticket = ""
@@ -46,7 +47,7 @@ class riftChatBot:
 	def login(self, username, password, charName):
 		# Log in to the authorisation server
 		print 'Logging in to auth server...'
-		authLoginResp = requests.post('%s/auth' % authURL, data={'username':username, 'password':password, 'channel':1})
+		authLoginResp = requests.post('%s/auth' % self.authURL, data={'username':username, 'password':password, 'channel':1})
 
 		if authLoginResp.status_code != 200:
 			print authLoginResp.text
@@ -56,18 +57,18 @@ class riftChatBot:
 
 		# Use the ticket to log into the chat server
 		print 'Logging in to chat server...'
-		verResp = requests.get('%s/chatservice/versionCheck' % chatURL, params={'version':'MAIN-108-55-A-569292'})
+		verResp = requests.get('%s/chatservice/versionCheck' % self.chatURL, params={'version':'MAIN-108-55-A-569292'})
 
 		if verResp.json()['status'] == 'failure':
 			print 'Server has ended support for this version'
 			return 2
 
-		chatLoginResp = requests.post('%s/chatservice/loginByTicket' % chatURL, data={'ticket':self.ticket})
+		chatLoginResp = requests.post('%s/chatservice/loginByTicket' % self.chatURL, data={'ticket':self.ticket})
 		self.cookie = chatLoginResp.cookies
 
 		# Log into the chosen character
 		print 'Selecting character...'
-		charsResp = requests.get('%s/chatservice/chat/characters' % chatURL, cookies=self.cookie)
+		charsResp = requests.get('%s/chatservice/chat/characters' % self.chatURL, cookies=self.cookie)
 
 		charList = charsResp.json()['data']
 		
@@ -88,7 +89,7 @@ class riftChatBot:
 			return 3
 		
 		# Login to the character
-		selCharResp = requests.get('%s/chatservice/chat/selectCharacter' % chatURL, params={'characterId':self.charID}, cookies=self.cookie)
+		selCharResp = requests.get('%s/chatservice/chat/selectCharacter' % self.chatURL, params={'characterId':self.charID}, cookies=self.cookie)
 
 		if selCharResp.status_code != 200:
 			print 'Login failed'
@@ -99,7 +100,7 @@ class riftChatBot:
 		
 	def getRequest(self):
 		try:
-			with closing(requests.get('%s/chatservice/servlet/chatlisten' % chatURL, cookies=self.cookie, headers={'User-Agent':'trion/mobile', 'Accept-Encoding':'', 'Cookie2':'$Version=1'}, stream=True)) as chatStream:
+			with closing(requests.get('%s/chatservice/servlet/chatlisten' % self.chatURL, cookies=self.cookie, headers={'User-Agent':'trion/mobile', 'Accept-Encoding':'', 'Cookie2':'$Version=1'}, stream=True)) as chatStream:
 				buffer = ''
 				table = None
 				for character in chatStream.iter_content(1):
@@ -134,7 +135,7 @@ class riftChatBot:
 		return req
 		
 	def listGuild(self):
-		guildResp = requests.get('%s/chatservice/internal/friendsAndGuild' % chatURL, params={'v':1, 'characterId':self.charID}, cookies=self.cookie)
+		guildResp = requests.get('%s/chatservice/internal/friendsAndGuild' % self.chatURL, params={'v':1, 'characterId':self.charID}, cookies=self.cookie)
 		return guildResp.json()['data']['guild']
 			
 	def sendResponse(self, req):
@@ -145,13 +146,13 @@ class riftChatBot:
 				self.sendPlayer(message, req.requesterId)
 		
 	def sendGuild(self, message):
-		sendChatResp = requests.get('%s/chatservice/guild/addChat' % chatURL, cookies=self.cookie, headers={'User-Agent':'trion/mobile','Accept-Encoding':'', 'Cookie2':'$Version=1'}, params={'characterId':self.charID, 'message':message})
+		sendChatResp = requests.get('%s/chatservice/guild/addChat' % self.chatURL, cookies=self.cookie, headers={'User-Agent':'trion/mobile','Accept-Encoding':'', 'Cookie2':'$Version=1'}, params={'characterId':self.charID, 'message':message})
 		if sendChatResp.status_code != 200:
 			print "Failed to send chat message\n"
 			print sendChatResp.text + '\n'
 			
 	def sendPlayer(self, message, recipient):
-		sendWhispResp = requests.get('%s/chatservice/chat/whisper' % chatURL, cookies=self.cookie, headers={'User-Agent':'trion/mobile', 'Accept-Encoding':'', 'Cookie2':'$Version=1'}, params={'senderId':self.charID, 'recipientId':recipient, 'message':message})
+		sendWhispResp = requests.get('%s/chatservice/chat/whisper' % self.chatURL, cookies=self.cookie, headers={'User-Agent':'trion/mobile', 'Accept-Encoding':'', 'Cookie2':'$Version=1'}, params={'senderId':self.charID, 'recipientId':recipient, 'message':message})
 		if sendWhispResp.status_code != 200:
 			print "Failed to send whisper\n"
 			print sendWhispResp.text + '\n'

@@ -17,5 +17,4 @@ Current functionality includes:
 
 Requirements:
 * python 2.7+
-* python requests module
 	

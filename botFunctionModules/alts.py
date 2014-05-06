@@ -96,7 +96,6 @@ def bot_alts_add(riftBot, req):
 					
 				DB.commit()
 				
-				
 		DB.close()
 			
 	return req
