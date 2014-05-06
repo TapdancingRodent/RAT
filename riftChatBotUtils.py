@@ -35,9 +35,11 @@ class riftChatBot:
 		self.chatURL = 'https://chat-%s.riftgame.com:443' % locale
 		self.charName = ""
 		self.charID = ""
-		self.ticket = ""
-		self.cookie = ""
+		self.ticket = None
+		self.cookie = None
 		self.timers = {}
+		self.resolve_function = None
+		self.su = False
 		
 	def __del__(self):
 		if self.timers:

@@ -11,7 +11,8 @@ sudoer = sys.argv[2].lower()
 DB = sqlite3.connect(dbName)
 c = DB.cursor()
 
-c.execute("INSERT INTO sudoers (player) VALUES (?)", (sudoer,))
+c.execute("INSERT INTO admins (player) VALUES (?)", (sudoer,))
+print "%s added" % sudoer
 DB.commit()
 DB.close()
  

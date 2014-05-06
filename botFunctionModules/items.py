@@ -3,7 +3,7 @@ import os
 import sqlite3
 from contextlib import closing
 
-__item_options_str__ = 'Options: -[~]crafted -[~]usable -class=? -slot=? -rarity=? -binding=? -level(<,>,=,~)?'
+__item_options_str__ = 'Options: -[~]crafted -[~]usable -id=? -class=? -slot=? -rarity=? -binding=? -level(<,>,=,~)?'
 
 # Search for an item in the database
 def bot_item(riftBot, req):
@@ -79,6 +79,7 @@ def bot_item(riftBot, req):
 					if item['Armor']:
 						statsList += ["Armor %i" % item['Armor']]
 					for stat in stats:
+						# This catches a weird corner case of stats having a string value
 						if type(stat['StatValue']) == type(0):
 							statsList += ["%s %i" % (stat['Stat'], stat['StatValue'])]
 					
@@ -284,15 +285,12 @@ def bot_recipe(riftBot, req):
 					recipe = cursor.fetchone()
 					ItemKey = recipe['ItemKey']
 					
-					req.response += ["Recipe: %s" % recipe['Name']]
+					req.response += ["Recipe: %s (%i %s)" % (recipe['Name'], recipe['RequiredSkillPoints'], recipe['RequiredSkill'])]
 					
 					# Collect ingredients
 					cursor.execute("SELECT * FROM Ingredients WHERE RecipeKey=?", (RecipeKey,))
 					ingredients = cursor.fetchall()
-					for ingr in ingredients:
-						req.response += ["%i %s" % (ingr['Quantity'], ingr['Name'])]
-					
-					req.response += ["%i %s" % (recipe['RequiredSkillPoints'], recipe['RequiredSkill'])]
+					req.response += [", ".join(["%i %s" % (ingr['Quantity'], ingr['Name']) for ingr in ingredients])]
 					
 					cursor.execute("SELECT Name FROM Items WHERE ItemKey=?", (ItemKey,))
 					req.response += ["Creates: %s %s" % (str(recipe['Quantity']), cursor.fetchone()['Name'])]

@@ -2,7 +2,7 @@ import sys, pkgutil, shlex, os
 import riftChatBotUtils, botFunctionModules
 
 # Look up a function (including sub-options)
-def get_function(argList):
+def resolve_function(argList):
 	if argList and argList[0] in __botFunctions__:
 		func, opt, desc = __botFunctions__[argList[0]]
 		n = 1
@@ -23,7 +23,7 @@ def bot_help(riftBot, req):
 	req.toWhisp = req.fromWhisp
 	
 	if req.argList:
-		func, opt, desc, remArgs = get_function(req.argList)
+		func, opt, desc, remArgs = resolve_function(req.argList)
 		
 		if func:
 			req.argList = ['--help']
@@ -36,52 +36,10 @@ def bot_help(riftBot, req):
 		req.response += ['Available functions: ' + ', '.join([bF for bF in sorted(__botFunctions__)]), 'Usage: !help [function]']
 	
 	return req
-
-def bot_sudo(riftBot, req):
-	if not req.argList:
-		req.toGuild = req.fromGuild
-		req.toWhisp = req.fromWhisp
-		req.response += ['Usage: !sudo [-user=player] function ..']
-	
-	elif req.argList[0] in ['-h', '--help']:
-		req.toGuild = req.fromGuild
-		req.toWhisp = req.fromWhisp
-		func, opts, desc = __botFunctions__["sudo"]
-		req.response += [desc]
-		req.response += ['Usage: !sudo [-user=player] function ..']
-		
-	else:
-		DB = riftBot.dbConnect()
-		cursor = DB.cursor()
-		cursor.execute("SELECT * FROM sudoers WHERE player=?", (req.requester,))
-		
-		if cursor.fetchone():
-			if len(req.argList[0]) > 7 and req.argList[0][0:6] == "-user=":
-				req.requester = req.argList[0][6:].lower()
-				req.argList = req.argList[1:]
-				req.su = True
-				
-			# Get a new subfunction
-			func, opt, desc, req.argList = get_function(req.argList)
-			if func:
-				# Run the function
-				req = func(riftBot, req)
-			else:
-				req.response += ['Function ' + req.argList[0] + ' not recognised']
-				
-		else:
-			req.toGuild = req.fromGuild
-			req.toWhisp = req.fromWhisp
-			req.response += ['%s is not a sudoer' % req.requester.title()]
-			
-		DB.close()
-		
-	return req
 	
 # A list of available functions - this will be fully populated during submodule importing
 __botFunctions__ = {
-	'help'	: (bot_help, [], "Get help information"),
-	'sudo'  : (bot_sudo, [], "Do things as an administrator")
+	'help'	: (bot_help, [], "Get help information")
 	}
 
 if __name__ == "__main__":
@@ -112,7 +70,7 @@ if __name__ == "__main__":
 	cursor.execute("CREATE TABLE IF NOT EXISTS timers (timerId INT PRIMARY KEY, player VARCHAR(30), playerId VARCHAR(30), sendGuild INT, message VARCHAR(255), timeStamp VARCHAR(30))")
 	cursor.execute("CREATE TABLE IF NOT EXISTS quotes (quoteId INT PRIMARY KEY, player VARCHAR(30), playerId VARCHAR(30), quote VARCHAR(255), score INT)")
 	cursor.execute("CREATE TABLE IF NOT EXISTS quoteVotes (quoteId INT, player VARCHAR(30), rating INT, CONSTRAINT pk_voteID PRIMARY KEY (quoteId, player))")
-	cursor.execute("CREATE TABLE IF NOT EXISTS sudoers (player VARCHAR(30) PRIMARY KEY, playerId VARCHAR(30))")
+	cursor.execute("CREATE TABLE IF NOT EXISTS admins (player VARCHAR(30) PRIMARY KEY, playerId VARCHAR(30))")
 	
 	# Backwards compatibility patch-esque-ness
 	cols = [col[1] for col in cursor.execute("PRAGMA table_info(timers)").fetchall()]
@@ -139,6 +97,7 @@ if __name__ == "__main__":
 		req = bot.getRequest()
 		if req:
 			numRetries = 0
+			req.resolve_function = resolve_function
 			print 'Received message: ' + req.message
 			
 			# Parse the request
@@ -155,11 +114,14 @@ if __name__ == "__main__":
 				req.argList = ['help']
 			
 			# Get the correct subfunction
-			func, opt, desc, req.argList = get_function(req.argList)
+			func, opt, desc, req.argList = req.resolve_function(req.argList)
 			if func:
 				# Run the function
 				req = func(bot, req)
+				
 			else:
+				req.toGuild = req.fromGuild
+				req.toWhisp = req.fromWhisp
 				req.response += ['Function ' + req.argList[0] + ' not recognised']
 			
 			# Debug messages
