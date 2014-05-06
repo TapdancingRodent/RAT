@@ -206,7 +206,7 @@ def bot_is(riftBot, req):
 		cursor = DB.cursor()
 
 		# Get guild members list
-		guildList = riftBot.listGuild()
+		guildList = riftBot.listFriendsAndGuild()
 		
 		# Get a list of lists of alts
 		# A little ugly but prevents multiple passes over the (potentially extensive) guild roster
@@ -267,6 +267,10 @@ def bot_is(riftBot, req):
 		
 	return req
 
+# Run on bot startup
+def __bot_init__(riftBot):
+	pass
+	
 # A list of options for the alts function
 __alts_options__ = {
 	'add'	: (bot_alts_add, [], "Add a player to a group of alts"),

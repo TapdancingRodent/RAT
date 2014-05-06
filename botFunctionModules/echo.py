@@ -38,6 +38,10 @@ def bot_say(riftBot, req):
 		
 	return req
 
+# Run on bot startup
+def __bot_init__(riftBot):
+	pass
+
 # A list of functions contained in this module, format: (function, options, description)
 __botFunctions__ = {
 	'echo'	: (bot_echo, [], "Return input phrase"),

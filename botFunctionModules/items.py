@@ -51,49 +51,51 @@ def bot_item(riftBot, req):
 						tagsList += [item['ArmorType']]
 					if item['Slot']:
 						tagsList += [item['Slot']]
+					if item['RequiredLevel']:
+						tagsList += ["Level %i" % item['RequiredLevel']]
+					
+					# Check required callings
+					if item['CallingRequired'] == 1:
+						cursor.execute("SELECT * FROM ItemCallings WHERE ItemKey=?", (ItemKey,))
+						callings = cursor.fetchone()
+						if callings['Warrior'] == 1:
+							tagsList += ["Warrior"]
+						if callings['Cleric'] == 1:
+							tagsList += ["Cleric"]
+						if callings['Rogue'] == 1:
+							tagsList += ["Rogue"]
+						if callings['Mage'] == 1:
+							tagsList += ["Mage"]
 						
 					tags = ", ".join(tagsList)
 					if tags:
 						req.response += [tags]
 					
-					if item['Armor']:
-						req.response += ["Armor %i" % item['Armor']]
-					
 					# List the item's stats
 					cursor.execute("SELECT * FROM ItemStats WHERE ItemKey=?", (ItemKey,))
 					stats = cursor.fetchall()
+					
+					statsList = []
+					if item['Armor']:
+						statsList += ["Armor %i" % item['Armor']]
 					for stat in stats:
-						req.response += ["%s %i" % (stat['Stat'], stat['StatValue'])]
+						if type(stat['StatValue']) == type(0):
+							statsList += ["%s %i" % (stat['Stat'], stat['StatValue'])]
+					
+					if stats:
+						req.response += [", ".join([s for s in sorted(statsList)])]
 						
 					if item['OnUse']:
 						req.response += ["Use: %s" % item['OnUse']]
 					
 					# Look up item set information (Gilded Battle Gear etc)
 					if item['SetId']:
-						req.response += [item['SetName']]
+						req.response += ["Set: %s" % item['SetName']]
 						if item['GivesSetBonus']:
 							cursor.execute("SELECT * FROM ItemSets WHERE ItemKey=?", (ItemKey,))
 							bonuses = cursor.fetchall()
 							for bonus in bonuses:
 								req.response += ["%i: %s" % (bonus['Pieces'], bonus['Bonus'])]
-								
-					if item['RequiredLevel']:
-						req.response += ["Requires level %i" % item['RequiredLevel']]
-					
-					# Check required callings
-					if item['CallingRequired'] == 1:
-						callList = []
-						cursor.execute("SELECT * FROM ItemCallings WHERE ItemKey=?", (ItemKey,))
-						callings = cursor.fetchone()
-						if callings['Warrior'] == 1:
-							callList += ["Warrior"]
-						if callings['Cleric'] == 1:
-							callList += ["Cleric"]
-						if callings['Rogue'] == 1:
-							callList += ["Rogue"]
-						if callings['Mage'] == 1:
-							callList += ["Mage"]
-						req.response += [", ".join(callList)]
 						
 				else:
 					req.response += ['No items found']
@@ -131,7 +133,7 @@ def bot_items(riftBot, req):
 					for n, item in enumerate(itemList):
 						req.response += [item['Name']]
 						if n == 2 and len(itemList) > 4:
-							req.response += ['%i entries truncated' % len(itemList)-n-1]
+							req.response += ['%i entries truncated' % (len(itemList)-n-1)]
 							break
 						
 				else:
@@ -215,6 +217,14 @@ def bot_items_query(req, itemsDB):
 				elif opt in 'rarity':
 					itemQuery += ["Rarity=? COLLATE NOCASE"]
 					itemValue += (val,)
+					
+				elif opt in 'id':
+					itemQuery += ["itemKey LIKE ?"]
+					itemValue += ("%%%s%%" % val,)
+					
+				elif opt in '~id':
+					itemQuery += ["itemKey NOT LIKE ?"]
+					itemValue += ("%%%s%%" % val,)
 				
 			elif optStr in 'crafted':
 				itemQuery += ["Craftable=?"]
@@ -321,7 +331,7 @@ def bot_recipes(riftBot, req):
 					for n, recipe in enumerate(recipeList):
 						req.response += [recipe['Name']]
 						if n == 2 and len(recipeList) > 4:
-							req.response += ['%i entries truncated' % len(recipeList)-n-1]
+							req.response += ['%i entries truncated' % (len(recipeList)-n-1)]
 							break
 						
 				else:
@@ -348,6 +358,10 @@ def bot_recipes_query(req, recipesDB):
 	recipeQuery = "SELECT RecipeKey, Name FROM Recipes WHERE %s LIMIT 100 COLLATE NOCASE" % " AND ".join(recipeQuery)
 	
 	return cursor.execute(recipeQuery, recipeValue)
+
+# Run on bot startup
+def __bot_init__(riftBot):
+	pass
 
 # A list of functions contained in this module, format: (function, options, description)
 __botFunctions__ = {

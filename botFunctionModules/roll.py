@@ -32,6 +32,10 @@ def bot_roll(riftBot, req):
 			req.response += ['Syntax Error']
 			
 	return req
+
+# Run on bot startup
+def __bot_init__(riftBot):
+	pass
 	
 # A list of functions contained in this module, format: (function, options, description)
 __botFunctions__ = {

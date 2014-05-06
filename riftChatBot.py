@@ -88,14 +88,6 @@ if __name__ == "__main__":
 	# Some basic validation
 	if len(sys.argv) < 4:
 		sys.exit('Please supply a username, password and character name')
-		
-	# import all the bot functions found in the botFunctionModules folder
-	for importer, moduleName, _ in pkgutil.walk_packages(['botFunctionModules']):
-		module = importer.find_module(moduleName).load_module(moduleName)
-		exec('%s = module' % moduleName)
-		
-		for func in module.__botFunctions__:
-			__botFunctions__[func] = module.__botFunctions__[func]
 	
 	# Collect data from stdin
 	username = sys.argv[1]
@@ -117,13 +109,29 @@ if __name__ == "__main__":
 	cursor = DB.cursor()
 	cursor.execute("CREATE TABLE IF NOT EXISTS alts (player VARCHAR(30) PRIMARY KEY, altGroup INT)")
 	cursor.execute("CREATE TABLE IF NOT EXISTS altConfirmations (player VARCHAR(30), altGroup INT, playerConfirmed INT, groupConfirmed INT, CONSTRAINT pk_confID PRIMARY KEY (player, altGroup))")
-	cursor.execute("DROP TABLE IF EXISTS timers")
-	cursor.execute("CREATE TABLE IF NOT EXISTS timers (timerId INT PRIMARY KEY, player VARCHAR(30), playerId VARCHAR(30), sendGuild INT, message VARCHAR(255))")
+	cursor.execute("CREATE TABLE IF NOT EXISTS timers (timerId INT PRIMARY KEY, player VARCHAR(30), playerId VARCHAR(30), sendGuild INT, message VARCHAR(255), timeStamp VARCHAR(30))")
 	cursor.execute("CREATE TABLE IF NOT EXISTS quotes (quoteId INT PRIMARY KEY, player VARCHAR(30), playerId VARCHAR(30), quote VARCHAR(255), score INT)")
 	cursor.execute("CREATE TABLE IF NOT EXISTS quoteVotes (quoteId INT, player VARCHAR(30), rating INT, CONSTRAINT pk_voteID PRIMARY KEY (quoteId, player))")
 	cursor.execute("CREATE TABLE IF NOT EXISTS sudoers (player VARCHAR(30) PRIMARY KEY, playerId VARCHAR(30))")
+	
+	# Backwards compatibility patch-esque-ness
+	cols = [col[1] for col in cursor.execute("PRAGMA table_info(timers)").fetchall()]
+	if not 'timeStamp' in cols:
+		cursor.execute("ALTER TABLE timers ADD COLUMN timeStamp VARCHAR(30) DEFAULT '01/01/00'")
+
 	DB.commit()
 	DB.close()
+		
+	# import all the bot functions found in the botFunctionModules folder
+	for importer, moduleName, _ in pkgutil.walk_packages(['botFunctionModules']):
+		module = importer.find_module(moduleName).load_module(moduleName)
+		exec('%s = module' % moduleName)
+		
+		for func in module.__botFunctions__:
+			__botFunctions__[func] = module.__botFunctions__[func]
+			
+		if module.__bot_init__:
+			module.__bot_init__(bot)
 	
 	# Begin listening to chat
 	print 'Listening for chat messages...'
@@ -131,7 +139,7 @@ if __name__ == "__main__":
 		req = bot.getRequest()
 		if req:
 			numRetries = 0
-			print 'Recieved message: ' + req.message
+			print 'Received message: ' + req.message
 			
 			# Parse the request
 			lex = shlex.shlex(req.message)

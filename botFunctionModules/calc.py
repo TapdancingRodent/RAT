@@ -2,8 +2,14 @@ import riftChatBotUtils
 import operator as op, ast
 
 # Safe calculator courtesy of Stack Overflow's J.F.Sebastian
-operators = {ast.Add: op.add, ast.Sub: op.sub, ast.Mult: op.mul,
-             ast.Div: op.truediv, ast.Pow: op.pow, ast.BitXor: op.pow}
+operators = {
+	ast.Add: op.add,
+	ast.Sub: op.sub,
+	ast.Mult: op.mul,
+	ast.Div: op.truediv,
+	ast.Mod: op.mod,
+	ast.Pow: op.pow,
+	ast.BitXor: op.pow}
 
 def eval_ast(node):
     if isinstance(node, ast.Num): # <number>
@@ -38,12 +44,16 @@ def bot_calc(riftBot, req):
 		except TypeError:
 			req.response += ['Syntax Error']
 		except SyntaxError:
-			if any('x' in arg for arg in argList):
+			if any('x' in arg for arg in req.argList):
 				req.response += ['Syntax Error: Use * for multiplication']
 			else:
 				req.response += ['Syntax Error']
 				
 	return req
+
+# Run on bot startup
+def __bot_init__(riftBot):
+	pass
 
 # A list of functions contained in this module, format: (function, options, description)
 __botFunctions__ = {

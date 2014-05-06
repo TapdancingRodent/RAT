@@ -86,6 +86,7 @@ def bot_timers_add(riftBot, req):
 							n1 = n2+1
 						
 					countdown = datetime.timedelta(hours=h, minutes=m, seconds=s)
+					timerTime = now + countdown
 				
 				except ValueError:
 					req.response += ['Syntax Error']
@@ -128,7 +129,7 @@ def bot_timers_add(riftBot, req):
 				
 			# Register the timer in the database
 			alertToGuild = (1 if req.toGuild else 0)
-			cursor.execute("INSERT INTO timers VALUES (?,?,?,?,?)", (timerId, req.requester, req.requesterId, alertToGuild, ' '.join(req.argList[1:])))
+			cursor.execute("INSERT INTO timers VALUES (?,?,?,?,?,?)", (timerId, req.requester, req.requesterId, alertToGuild, ' '.join(req.argList[1:]), timerTime.strftime('%c')))
 			DB.commit()
 			
 			# Set the timer and store it
@@ -165,10 +166,11 @@ def bot_timers_list(riftBot, req):
 		cursor = DB.cursor()
 		
 		# Get a list of the player's timers and output them
-		timers = cursor.execute("SELECT timerId, message FROM timers WHERE player=?", (main,)).fetchall()
+		timers = cursor.execute("SELECT timerId, message, timeStamp FROM timers WHERE player=?", (main,)).fetchall()
 		if timers:
 			for timer in timers:
-				req.response += ['Timer %i: %s' % (timer['timerId'], timer['message'])]
+				countdown = datetime.datetime.strptime(timer['timeStamp'], '%c') - datetime.datetime.utcnow()
+				req.response += ['Timer %i: %s due in %is' % (timer['timerId'], timer['message'], countdown.total_seconds())]
 		
 		else:
 			req.response += ['%s has no pending timers' % main.title()]
@@ -245,7 +247,7 @@ def bot_timers_trigger(riftBot, timerId):
 		if timerInfo['sendGuild'] == 1:
 			req.toGuild = True
 		req.toWhisp = True
-		req.response += ['Timer %i: %s' % (timerId, timerInfo['message'])]
+		req.response += ["%s's Timer: %s" % (timerInfo['player'].title(), timerInfo['message'])]
 		
 		# Remove the timer from the database
 		cursor.execute("DELETE FROM timers WHERE timerId=?", (timerId,))
@@ -261,6 +263,38 @@ def bot_timers_trigger(riftBot, timerId):
 	DB.close()
 		
 	riftBot.sendResponse(req)
+
+# Run on bot startup
+def __bot_init__(riftBot):
+	# Retrieve any previously created timers and start them again
+	DB = riftBot.dbConnect()
+	cursor = DB.cursor()
+	
+	# Retrieve old timers (i.e. in case we just crashed)
+	timers = cursor.execute("SELECT * FROM timers").fetchall()
+	for oldTimer in timers:
+		if oldTimer['timerId'] and oldTimer['timeStamp']:
+			timerTime = datetime.datetime.strptime(oldTimer['timeStamp'], '%c')
+			countdown = timerTime - datetime.datetime.utcnow()
+			
+			# Have we missed it?
+			if countdown.total_seconds < 0:
+				if countdown.total_seconds > -300:
+					# Trigger the timer if its less than 5 minutes late, no point necroing
+					bot_timers_trigger(riftBot, oldTimer['timerId'])
+					
+				else:
+					cursor.execute("DELETE FROM timers WHERE timerid=?", (timer['timerId'],))
+				
+			else:
+				# Set the timer and store it
+				timer = threading.Timer(countdown.total_seconds(), bot_timers_trigger, [riftBot, oldTimer['timerId']])
+				timer.daemon = True
+				timer.start()
+				riftBot.appendTimer(oldTimer['timerId'], timer)
+				
+		else:
+			cursor.execute("DELETE FROM timers WHERE timerid=?", (timer['timerId'],))
 
 # A list of options for the timers function
 __timers_options__ = {
