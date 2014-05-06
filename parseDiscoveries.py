@@ -32,12 +32,13 @@ files = trionServer.nlst()
 for fileName in files:
 	if "Rift_Discoveries_" in fileName:
 		break
-
-with open("./oldRepo.txt", 'r+') as oldRepo:
-	for line in oldRepo:
-		if line == fileName:
-			print 'Local database is up to date'
-			sys.exit()
+		
+if os.path.isfile('./oldRepo'):
+	with open("./oldRepo", 'r+') as oldRepo:
+		for line in oldRepo:
+			if line == fileName:
+				print 'Local database is up to date'
+				sys.exit()
 
 print 'Downloading %s...' % fileName
 repo = open(fileName, 'wb+')
@@ -227,7 +228,7 @@ db.commit()
 db.close()
 
 # Remember that we've updated the database
-with open("./oldRepo.txt", 'w+') as oldRepo:
+with open("./oldRepo", 'w+') as oldRepo:
 	oldRepo.write(fileName)
 
 os.remove('./%s' % fileName)
