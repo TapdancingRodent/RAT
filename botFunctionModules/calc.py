@@ -26,7 +26,7 @@ def bot_calc(riftBot, req):
 	if not req.argList:
 		req.response += ['Usage: !calc expr']
 		
-	elif req.argList[0] in ['-h', '--help', 'help']:
+	elif req.argList[0] in ['-h', '--help']:
 		func, opts, desc = __botFunctions__["calc"]
 		req.response += [desc]
 		req.response += ['Usage: !calc expr']

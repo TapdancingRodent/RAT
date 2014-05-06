@@ -23,6 +23,7 @@ class riftChatRequest:
 		self.fromWhisp = False
 		self.toGuild = False
 		self.toWhisp = False
+		self.su = False
 		self.requester = ""
 		self.requesterId = ""
 		self.message = ""

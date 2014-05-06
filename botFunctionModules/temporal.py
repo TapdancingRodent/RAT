@@ -27,7 +27,7 @@ def bot_time(riftBot, req):
 
 # !timers is basically an alias for !timers list
 def bot_timers(riftBot, req):
-	if req.argList and req.argList[0] in ['-h', '--help', 'help']:
+	if req.argList and req.argList[0] in ['-h', '--help']:
 		req.toGuild = req.fromGuild
 		req.toWhisp = req.fromWhisp
 		
@@ -46,7 +46,7 @@ def bot_timers_add(riftBot, req):
 	if not req.argList:
 		req.response += ['Usage: !timers add hh:mm[:ss]/[Ah][Bm][Cs]']
 		
-	elif req.argList[0] in ['-h', '--help', 'help']:
+	elif req.argList[0] in ['-h', '--help']:
 		func, opts, desc = __timers_options__["add"]
 		req.response += [desc]
 		req.response += ['Usage: !timers add hh:mm[:ss]/[Ah][Bm][Cs]']
@@ -143,62 +143,12 @@ def bot_timers_add(riftBot, req):
 		
 	return req
 
-# Remove a pending timer
-def bot_timers_remove(riftBot, req):
-	req.toGuild = req.fromGuild
-	req.toWhisp = req.fromWhisp
-	
-	if not req.argList:
-		req.response += ['Usage: !timers rem ID [ID ..]']
-		
-	elif req.argList[0] in ['-h', '--help', 'help']:
-		func, opts, desc = __timers_options__["rem"]
-		req.response += [desc]
-		req.response += ['Usage: !timers rem ID [ID ..]']
-	
-	else:
-		# Load the timers database
-		DB = riftBot.dbConnect()
-		cursor = DB.cursor()
-		
-		# Get a list of timers this user owns
-		timers = cursor.execute("SELECT timerId FROM timers WHERE player=?", (req.requester,)).fetchall()
-		playerTimers = [timer['timerId'] for timer in timers]
-		for arg in req.argList:
-			# Get the timer the user specified
-			timer = cursor.execute("SELECT * FROM timers WHERE timerId=?", (int(arg),)).fetchone()
-			if timer:
-				try:
-					if int(arg) in playerTimers:
-						# Remove the timer from the database and cancel the timer function
-						cursor.execute("DELETE FROM timers WHERE timerId=?", (int(arg),))
-						if cursor.rowcount > 0 and riftBot.removeTimer(int(arg)):
-							req.response += ['Timer %s removed' % arg]
-							DB.commit()
-							
-						else:
-							req.response += ['Error: Removal of timer %s failed' % arg]
-							DB.rollback()
-							
-					else:
-						req.response += ['%s does not own timer %s' % (req.requester.title(), arg)]
-					
-				except ValueError:
-					req.response += ['%s is not a valid timer ID' % arg]
-						
-			else:
-				req.response += ['No timer pending with ID %s' % arg]
-			
-		DB.close()
-		
-	return req
-
 # List pending timers
 def bot_timers_list(riftBot, req):
 	req.toGuild = req.fromGuild
 	req.toWhisp = req.fromWhisp
 		
-	if req.argList and req.argList[0] in ['-h', '--help', 'help']:
+	if req.argList and req.argList[0] in ['-h', '--help']:
 		func, opts, desc = __timers_options__["list"]
 		req.response += [desc]
 		req.response += ['Usage: !timers list [player]']
@@ -223,6 +173,56 @@ def bot_timers_list(riftBot, req):
 		else:
 			req.response += ['%s has no pending timers' % main.title()]
 		
+		DB.close()
+		
+	return req
+
+# Remove a pending timer
+def bot_timers_remove(riftBot, req):
+	req.toGuild = req.fromGuild
+	req.toWhisp = req.fromWhisp
+	
+	if not req.argList:
+		req.response += ['Usage: !timers rem ID [ID ..]']
+		
+	elif req.argList[0] in ['-h', '--help']:
+		func, opts, desc = __timers_options__["rem"]
+		req.response += [desc]
+		req.response += ['Usage: !timers rem ID [ID ..]']
+	
+	else:
+		# Load the timers database
+		DB = riftBot.dbConnect()
+		cursor = DB.cursor()
+		
+		# Get a list of timers this user owns
+		timers = cursor.execute("SELECT timerId FROM timers WHERE player=?", (req.requester,)).fetchall()
+		playerTimers = [timer['timerId'] for timer in timers]
+		for arg in req.argList:
+			# Get the timer the user specified
+			timer = cursor.execute("SELECT * FROM timers WHERE timerId=?", (int(arg),)).fetchone()
+			if timer:
+				try:
+					if int(arg) in playerTimers or req.su:
+						# Remove the timer from the database and cancel the timer function
+						cursor.execute("DELETE FROM timers WHERE timerId=?", (int(arg),))
+						if cursor.rowcount > 0 and riftBot.removeTimer(int(arg)):
+							req.response += ['Timer %s removed' % arg]
+							DB.commit()
+							
+						else:
+							req.response += ['Error: Removal of timer %s failed' % arg]
+							DB.rollback()
+							
+					else:
+						req.response += ['%s does not own timer %s' % (req.requester.title(), arg)]
+					
+				except ValueError:
+					req.response += ['%s is not a valid timer ID' % arg]
+						
+			else:
+				req.response += ['No timer pending with ID %s' % arg]
+			
 		DB.close()
 		
 	return req

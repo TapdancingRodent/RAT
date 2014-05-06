@@ -19,29 +19,69 @@ def get_function(argList):
 
 # Help function - mostly just an alias for the --help option
 def bot_help(riftBot, req):
-	argList = req.argList
 	req.toGuild = req.fromGuild
 	req.toWhisp = req.fromWhisp
 	
-	if argList:
-		func, opt, desc, remArgs = get_function(argList)
+	if req.argList:
+		func, opt, desc, remArgs = get_function(req.argList)
 		
 		if func:
 			req.argList = ['--help']
-			req.argStr = '--help'
 			req = func(riftBot, req)
 			
 		else:
-			req.response += ['No help found for ' + argList[0]]
+			req.response += ['No help found for ' + req.argList[0]]
 			
 	else:
 		req.response += ['Available functions: ' + ', '.join([bF for bF in sorted(__botFunctions__)]), 'Usage: !help [function]']
 	
 	return req
+
+def bot_sudo(riftBot, req):
+	if not req.argList:
+		req.toGuild = req.fromGuild
+		req.toWhisp = req.fromWhisp
+		req.response += ['Usage: !sudo [-user=player] function ..']
+	
+	elif req.argList[0] in ['-h', '--help']:
+		req.toGuild = req.fromGuild
+		req.toWhisp = req.fromWhisp
+		func, opts, desc = __botFunctions__["sudo"]
+		req.response += [desc]
+		req.response += ['Usage: !sudo [-user=player] function ..']
+		
+	else:
+		DB = riftBot.dbConnect()
+		cursor = DB.cursor()
+		cursor.execute("SELECT * FROM sudoers WHERE player=?", (req.requester,))
+		
+		if cursor.fetchone():
+			if len(req.argList[0]) > 7 and req.argList[0][0:6] == "-user=":
+				req.requester = req.argList[0][6:].lower()
+				req.argList = req.argList[1:]
+				req.su = True
+				
+			# Get a new subfunction
+			func, opt, desc, req.argList = get_function(req.argList)
+			if func:
+				# Run the function
+				req = func(riftBot, req)
+			else:
+				req.response += ['Function ' + req.argList[0] + ' not recognised']
+				
+		else:
+			req.toGuild = req.fromGuild
+			req.toWhisp = req.fromWhisp
+			req.response += ['%s is not a sudoer' % req.requester.title()]
+			
+		DB.close()
+		
+	return req
 	
 # A list of available functions - this will be fully populated during submodule importing
 __botFunctions__ = {
-	'help'	: (bot_help, [], "Get help information")
+	'help'	: (bot_help, [], "Get help information"),
+	'sudo'  : (bot_sudo, [], "Do things as an administrator")
 	}
 
 if __name__ == "__main__":
@@ -75,6 +115,7 @@ if __name__ == "__main__":
 	cursor.execute("CREATE TABLE IF NOT EXISTS timers (timerId INT PRIMARY KEY, player VARCHAR(30), playerId VARCHAR(30), sendGuild INT, message VARCHAR(255))")
 	cursor.execute("CREATE TABLE IF NOT EXISTS quotes (quoteId INT PRIMARY KEY, player VARCHAR(30), playerId VARCHAR(30), quote VARCHAR(255), score INT)")
 	cursor.execute("CREATE TABLE IF NOT EXISTS quoteVotes (quoteId INT, player VARCHAR(30), rating INT, CONSTRAINT pk_voteID PRIMARY KEY (quoteId, player))")
+	cursor.execute("CREATE TABLE IF NOT EXISTS sudoers (player VARCHAR(30) PRIMARY KEY, playerId VARCHAR(30))")
 	DB.commit()
 	DB.close()
 	
@@ -92,16 +133,15 @@ if __name__ == "__main__":
 			lex.whitespace_split = True
 			lex.commentors = ''
 			lex.escapedquotes = ''
-			argList = list(lex)
-			argList = [arg.strip('"') for arg in argList]
+			req.argList = list(lex)
+			req.argList = [arg.strip('"') for arg in req.argList]
 			
 			# If "!" was the query string, instead give help
-			if not argList:
-				argList = ['help']
+			if not req.argList:
+				req.argList = ['help']
 			
 			# Get the correct subfunction
-			func, opt, desc, req.argList = get_function(argList)
-			req.argStr = ' '.join(req.argList)
+			func, opt, desc, req.argList = get_function(req.argList)
 			if func:
 				# Run the function
 				req = func(bot, req)

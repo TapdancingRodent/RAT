@@ -14,7 +14,7 @@ def bot_item(riftBot, req):
 		req.response += ['Usage: !item [options] [~]name']
 		req.response += [__item_options_str__]
 		
-	elif req.argList[0] in ['-h', '--help', 'help']:
+	elif req.argList[0] in ['-h', '--help']:
 		func, opts, desc = __botFunctions__["item"]
 		req.response += [desc]
 		req.response += ['Usage: !item [options] [~]name']
@@ -112,7 +112,7 @@ def bot_items(riftBot, req):
 		req.response += ['Usage: !items [options] [~]name']
 		req.response += [__item_options_str__]
 		
-	elif req.argList[0] in ['-h', '--help', 'help']:
+	elif req.argList[0] in ['-h', '--help']:
 		func, opts, desc = __botFunctions__["items"]
 		req.response += [desc]
 		req.response += ['Usage: !items [options] [~]name']
@@ -249,7 +249,7 @@ def bot_recipe(riftBot, req):
 	if not req.argList:
 		req.response += ['Usage: !recipe [-]name']
 		
-	elif req.argList[0] in ['-h', '--help', 'help']:
+	elif req.argList[0] in ['-h', '--help']:
 		func, opts, desc = __botFunctions__["recipe"]
 		req.response += [desc]
 		req.response += ['Usage: !recipe [-]name']
@@ -303,7 +303,7 @@ def bot_recipes(riftBot, req):
 	if not req.argList:
 		req.response += ['Usage: !recipe [~]name']
 		
-	elif req.argList[0] in ['-h', '--help', 'help']:
+	elif req.argList[0] in ['-h', '--help']:
 		func, opts, desc = __botFunctions__["recipes"]
 		req.response += [desc]
 		req.response += ['Usage: !recipes [~]name']

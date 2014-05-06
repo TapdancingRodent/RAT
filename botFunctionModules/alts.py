@@ -2,7 +2,7 @@ import riftChatBotUtils
 
 # !alts is basically an alias for !alts list
 def bot_alts(riftBot, req):
-	if req.argList and req.argList[0] in ['-h', '--help', 'help']:
+	if req.argList and req.argList[0] in ['-h', '--help']:
 		req.toGuild = req.fromGuild
 		req.toWhisp = req.fromWhisp
 		
@@ -21,7 +21,7 @@ def bot_alts_add(riftBot, req):
 	if not req.argList:
 		req.response += ['Usage: !alts add character [character ..]']
 		
-	elif req.argList[0] in ['-h', '--help', 'help']:
+	elif req.argList[0] in ['-h', '--help']:
 		func, opts, desc = __alts_options__["add"]
 		req.response += [desc]
 		req.response += ['Usage: !alts add character [character ..]']
@@ -48,13 +48,13 @@ def bot_alts_add(riftBot, req):
 					cursor.execute("DELETE FROM altConfirmations WHERE player=?", (req.requester,))
 					cursor.execute("INSERT OR REPLACE INTO alts VALUES (?,?)", (req.requester, group))
 					DB.commit()
-					req.response += [req.requester.title() + ' added']
+					req.response += ['%s confirmed' % req.requester.title()]
 				
 				# If no confirmation is pending register a request to join the group
 				else:
 					cursor.execute("INSERT OR REPLACE INTO altConfirmations VALUES (?,?,1,0)", (req.requester, group))
 					DB.commit()
-					req.response += [req.requester.title() + ' added (requires confirmation)']
+					req.response += ['%s added to group %i (requires confirmation)' % (req.requester.title(), group)]
 				
 			else:
 				# Groups are inconsistent
@@ -67,21 +67,18 @@ def bot_alts_add(riftBot, req):
 			# If the player is already in a group
 			if group:
 				group = group['altGroup']
-				added = 0
-				confirmed = 0
-				
 				for alt in req.argList:
 					# If the alt has already requested to join this group add them to the alt group
 					confirmation = cursor.execute("SELECT playerConfirmed FROM altConfirmations WHERE player=? AND altGroup=?", (alt, group)).fetchone()
 					if confirmation and confirmation['playerConfirmed']:
 						cursor.execute("DELETE FROM altConfirmations WHERE player=?", (alt,))
 						cursor.execute("INSERT OR REPLACE INTO alts VALUES (?,?)", (alt, group))
-						req.response += [alt + ' confirmed']
+						req.response += ['%s confirmed' % alt.title()]
 					
 					# Otherwise register the group invite
 					else:
 						cursor.execute("INSERT OR REPLACE INTO altConfirmations VALUES (?,?,0,1)", (alt.lower(), group))
-						req.response += [alt + ' added (confirmation required)']
+						req.response += ['%s added to group %i (confirmation required)' % (alt.title(), group)]
 				
 				DB.commit()
 				
@@ -95,9 +92,10 @@ def bot_alts_add(riftBot, req):
 				cursor.execute("INSERT INTO alts VALUES(?,?)", (req.requester, group))
 				for alt in req.argList:
 					cursor.execute("INSERT OR REPLACE INTO altConfirmations VALUES (?,?,0,1)", (alt.lower(), group))
+					req.response += ['%s added to group %i (requires confirmation)' % (alt.title(), group)]
 					
 				DB.commit()
-				req.response += ['Alts added (requires confirmation from each alt)']
+				
 				
 		DB.close()
 			
@@ -108,7 +106,7 @@ def bot_alts_list(riftBot, req):
 	req.toGuild = req.fromGuild
 	req.toWhisp = req.fromWhisp
 		
-	if req.argList and req.argList[0] in ['-h', '--help', 'help']:
+	if req.argList and req.argList[0] in ['-h', '--help']:
 		func, opts, desc = __alts_options__["list"]
 		req.response += [desc]
 		req.response += ['Usage: !alts list [character]']
@@ -151,7 +149,7 @@ def bot_alts_remove(riftBot, req):
 	if not req.argList:
 		req.response += ['Usage: !alts rem character [character ..]']
 		
-	elif req.argList[0] in ['-h', '--help', 'help']:
+	elif req.argList[0] in ['-h', '--help']:
 		func, opts, desc = __alts_options__["rem"]
 		req.response += [desc]
 		req.response += ['Usage: !alts rem character [character ..]']
@@ -168,16 +166,16 @@ def bot_alts_remove(riftBot, req):
 				# Check that the alt is in the user's group
 				for alt in req.argList:
 					isAlt = cursor.execute("SELECT * FROM alts WHERE player=? AND altGroup=?", (alt.lower(), altGroup)).fetchone()
-					if isAlt:
+					if isAlt or req.su:
 						# Purge the alt from the database
 						cursor.execute("DELETE FROM alts WHERE player=? AND altGroup=?", (alt.lower(), altGroup))
-						req.response += [alt + ' removed']
+						req.response += ['%s removed from alts database' % alt]
 						
 					else:
 						# Try to purge the alt from the confirmations database
 						cursor.execute("DELETE FROM altConfirmations WHERE player=? AND altGroup=?", (alt.lower(), altGroup))
 						if cursor.rowcount > 0:
-							req.response += [alt + "\'s join request has been removed"]
+							req.response += ["%s's join request has been removed" % alt.title()]
 							
 						else:
 							req.response += ['No entry found for %s and %s' % (req.requester.title(), alt)]
@@ -199,7 +197,7 @@ def bot_is(riftBot, req):
 	if not req.argList:
 		req.response += ['Usage: !is character [character ...]']
 		
-	elif req.argList[0] in ['-h', '--help', 'help']:
+	elif req.argList[0] in ['-h', '--help']:
 		func, opts, desc = __botFunctions__["is"]
 		req.response += [desc]
 		req.response += ['Usage: !is character [character ...]']

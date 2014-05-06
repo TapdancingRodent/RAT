@@ -9,7 +9,7 @@ def bot_roll(riftBot, req):
 	if not req.argList:
 		req.response += ['Usage: !roll [min] max']
 		
-	elif req.argList[0] in ['-h', '--help', 'help']:
+	elif req.argList[0] in ['-h', '--help']:
 		func, opts, desc = __botFunctions__["roll"]
 		req.response += [desc]
 		req.response += ['Usage: !roll [min] max']

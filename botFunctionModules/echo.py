@@ -8,7 +8,7 @@ def bot_echo(riftBot, req):
 	if not req.argList:
 		req.response += ['Usage: !echo text']
 		
-	elif req.argList[0] in ['-h', '--help', 'help']:
+	elif req.argList[0] in ['-h', '--help']:
 		func, opts, desc = __botFunctions__["echo"]
 		req.response += [desc]
 		req.response += ['Usage: !echo text']
@@ -26,7 +26,7 @@ def bot_say(riftBot, req):
 	if not req.argList:
 		req.response += ['Usage: !say text']
 		
-	elif req.argList[0] in ['-h', '--help', 'help']:
+	elif req.argList[0] in ['-h', '--help']:
 		func, opts, desc = __botFunctions__["say"]
 		req.response += [desc]
 		req.response += ['Usage: !say text']
