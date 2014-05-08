@@ -62,17 +62,27 @@ if __name__ == "__main__":
 	print 'Initialising databases...'
 	DB = bot.dbConnect()
 	cursor = DB.cursor()
+	
+	# Backwards compatibility patch-esque-ness
+	cols = [col[1] for col in cursor.execute("PRAGMA table_info(quotes)").fetchall()]
+	if 'score' in cols:
+		cursor.execute("DROP TABLE IF EXISTS quotes")
+	cols = [col[1] for col in cursor.execute("PRAGMA table_info(quoteVotes)").fetchall()]
+	if not 'playerId' in cols:
+		cursor.execute("DROP TABLE IF EXISTS quoteVotes")
+		
 	cursor.execute("CREATE TABLE IF NOT EXISTS alts (player VARCHAR(30) PRIMARY KEY, altGroup INT)")
 	cursor.execute("CREATE TABLE IF NOT EXISTS altConfirmations (player VARCHAR(30), altGroup INT, playerConfirmed INT, groupConfirmed INT, CONSTRAINT pk_confID PRIMARY KEY (player, altGroup))")
 	cursor.execute("CREATE TABLE IF NOT EXISTS timers (timerId INT PRIMARY KEY, player VARCHAR(30), playerId VARCHAR(30), sendGuild INT, message VARCHAR(255), timeStamp VARCHAR(30))")
-	cursor.execute("CREATE TABLE IF NOT EXISTS quotes (quoteId INT PRIMARY KEY, player VARCHAR(30), playerId VARCHAR(30), quote VARCHAR(255), score INT)")
-	cursor.execute("CREATE TABLE IF NOT EXISTS quoteVotes (quoteId INT, player VARCHAR(30), rating INT, CONSTRAINT pk_voteID PRIMARY KEY (quoteId, player))")
+	cursor.execute("CREATE TABLE IF NOT EXISTS quotes (quoteId INT PRIMARY KEY, player VARCHAR(30), submitter VARCHAR(30), quote VARCHAR(255))")
+	cursor.execute("CREATE TABLE IF NOT EXISTS quoteVotes (quoteId INT, player VARCHAR(30), playerId VARCHAR(30), rating INT, CONSTRAINT pk_voteID PRIMARY KEY (quoteId, player))")
 	cursor.execute("CREATE TABLE IF NOT EXISTS admins (player VARCHAR(30) PRIMARY KEY, playerId VARCHAR(30))")
 	
 	# Backwards compatibility patch-esque-ness
 	cols = [col[1] for col in cursor.execute("PRAGMA table_info(timers)").fetchall()]
 	if not 'timeStamp' in cols:
 		cursor.execute("ALTER TABLE timers ADD COLUMN timeStamp VARCHAR(30) DEFAULT '01/01/00'")
+		
 
 	DB.commit()
 	DB.close()

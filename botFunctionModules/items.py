@@ -139,7 +139,7 @@ def bot_items(riftBot, req):
 			
 	return req
 
-# Look up items in an items database (used by bot_item and bot_items)
+# Look up items in an items database using extended search options
 def bot_items_query(req, itemsDB):
 	cursor = itemsDB.cursor()
 	
@@ -148,6 +148,8 @@ def bot_items_query(req, itemsDB):
 	for arg in req.argList:
 		if arg[0] == '-':
 			optStr = arg.strip("-").lower()
+			
+			# Options based on level requirements
 			if len(optStr) > 6 and optStr[0:5] == 'level':
 				try:
 					if optStr[5] == '<':
@@ -173,59 +175,61 @@ def bot_items_query(req, itemsDB):
 					req.response += ['Error: Level given non-integer argument']
 			
 			elif '=' in optStr:
+				# Class requirement options
 				opt, val = optStr.split("=")
-				if opt in 'class':
-					if val in 'warrior':
+				if opt in ['c', 'class']:
+					if val in ['w', 'warrior']:
 						itemQuery += ["(CallingRequired=0 OR Warrior=1)"]
 					
-					elif val in 'cleric':
+					elif val in ['c', 'cleric']:
 						itemQuery += ["(CallingRequired=0 OR Cleric=1)"]
 						
-					elif val in 'rogue':
+					elif val in ['r', 'rogue']:
 						itemQuery += ["(CallingRequired=0 OR Rogue=1)"]
 						
-					elif val in 'mage':
+					elif val in ['m', 'mage']:
 						itemQuery += ["(CallingRequired=0 OR Mage=1)"]
 				
-				elif opt in 'usable':
+				# Other extended options
+				elif opt in ['u', 'usable']:
 					itemQuery += ["OnUse IS NOT NULL"]
 				
-				elif opt in '~usable':
+				elif opt in ['~u', '~usable']:
 					itemQuery += ["OnUse IS NULL"]
 				
-				elif opt in 'slot':
+				elif opt in ['s', 'slot']:
 					itemQuery += ["Slot LIKE ?"]
 					itemValue += ("%%%s%%" % val,)
 				
-				elif opt in '~slot':
+				elif opt in ['~s', '~slot']:
 					itemQuery += ["Slot NOT LIKE ?"]
 					itemValue += ("%%%s%%" % val,)
 				
-				elif opt in 'binding':
+				elif opt in ['b', 'binding']:
 					itemQuery += ["Binding LIKE ?"]
 					itemValue += ("%%%s%%" % val,)
 				
-				elif opt in '~binding':
+				elif opt in ['~b', '~binding']:
 					itemQuery += ["Binding NOT LIKE ?"]
 					itemValue += ("%%%s%%" % val,)
 				
-				elif opt in 'rarity':
+				elif opt in ['r', 'rarity']:
 					itemQuery += ["Rarity=? COLLATE NOCASE"]
 					itemValue += (val,)
 					
-				elif opt in 'id':
+				elif opt in ['i', 'id']:
 					itemQuery += ["itemKey LIKE ?"]
 					itemValue += ("%%%s%%" % val,)
 					
-				elif opt in '~id':
+				elif opt in ['~i', '~id']:
 					itemQuery += ["itemKey NOT LIKE ?"]
 					itemValue += ("%%%s%%" % val,)
 				
-			elif optStr in 'crafted':
+			elif optStr in ['c', 'crafted']:
 				itemQuery += ["Craftable=?"]
 				itemValue += (1,)
 					
-			elif optStr in '~crafted':
+			elif optStr in ['~c', '~crafted']:
 				itemQuery += ["Craftable=?"]
 				itemValue += (0,)
 				
@@ -234,6 +238,7 @@ def bot_items_query(req, itemsDB):
 				
 		else:
 		
+			# Pure string matching options
 			if arg[0] == '~':
 				itemQuery += ["Name NOT LIKE ?"]
 				itemValue += ("%%%s%%" % arg[1:],)
@@ -242,24 +247,25 @@ def bot_items_query(req, itemsDB):
 				itemQuery += ["Name LIKE ?"]
 				itemValue += ("%%%s%%" % arg,)
 			
-	itemQuery = "SELECT Items.ItemKey AS ItemKey, Name FROM Items LEFT JOIN ItemCallings ON Items.ItemKey=ItemCallings.ItemKey WHERE %s LIMIT 100" % " AND ".join(itemQuery)
+	if itemQuery:
+		itemQuery = "SELECT Items.ItemKey AS ItemKey, Name FROM Items LEFT JOIN ItemCallings ON Items.ItemKey=ItemCallings.ItemKey WHERE %s LIMIT 100" % " AND ".join(itemQuery)
+	else:
+		itemQuery = "SELECT Items.ItemKey AS ItemKey, Name FROM Items LEFT JOIN ItemCallings ON Items.ItemKey=ItemCallings.ItemKey LIMIT 100"
+		
 	
 	return cursor.execute(itemQuery, itemValue)
 
 # Look up a recipe in the items database
 def bot_recipe(riftBot, req):
 	if not req.argList:
-		req.response += ['Usage: !recipe [-]name']
+		req.response += ['Usage: !recipe [~]name']
 		
 	elif req.argList[0] in ['-h', '--help']:
 		func, opts, desc = __botFunctions__["recipe"]
 		req.response += [desc]
-		req.response += ['Usage: !recipe [-]name']
+		req.response += ['Usage: !recipe [~]name']
 	
 	else:
-		req.toGuild = req.fromGuild
-		req.toWhisp = req.fromWhisp
-		
 		# Load the items database
 		if os.path.isfile('discoveries.db'):
 			with closing(sqlite3.connect('discoveries.db')) as recipesDB:
@@ -327,13 +333,14 @@ def bot_recipes(riftBot, req):
 			
 	return req
 	
-# Look up recipes in an items database (used by bot_recipe and bot_recipes)
+# Look up recipes in a recipes database using an extended set of options
 def bot_recipes_query(req, recipesDB):
 	cursor = recipesDB.cursor()
 	
 	recipeQuery = []
 	recipeValue = ()
 	for arg in req.argList:
+		# Pure string matching options
 		if arg[0] == '~':
 			recipeQuery += ["Name NOT LIKE ?"]
 			recipeValue += ("%%%s%%" % arg[1:],)
@@ -341,7 +348,10 @@ def bot_recipes_query(req, recipesDB):
 			recipeQuery += ["Name LIKE ?"]
 			recipeValue += ("%%%s%%" % arg,)
 			
-	recipeQuery = "SELECT RecipeKey, Name FROM Recipes WHERE %s LIMIT 100 COLLATE NOCASE" % " AND ".join(recipeQuery)
+	if recipeQuery:
+		recipeQuery = "SELECT RecipeKey, Name FROM Recipes WHERE %s LIMIT 100" % " AND ".join(recipeQuery)
+	else:
+		recipeQuery = "SELECT RecipeKey, Name FROM Recipes LIMIT 100"
 	
 	return cursor.execute(recipeQuery, recipeValue)
 

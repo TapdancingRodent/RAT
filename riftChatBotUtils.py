@@ -143,6 +143,10 @@ class riftChatBot:
 			
 		return req
 		
+	def guildMessages(self):
+		guildResp = requests.get('%s/chatservice/guild/listChat' % self.chatURL, params={'characterId':self.charID}, cookies=self.cookie)
+		return guildResp.json()['data']
+		
 	def listFriends(self):
 		friendsResp = requests.get('%s/chatservice/internal/friendsAndGuild' % self.chatURL, params={'v':1, 'characterId':self.charID}, cookies=self.cookie)
 		return friendsResp.json()['data']['friend']
