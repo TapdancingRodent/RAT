@@ -3,9 +3,6 @@ import riftChatBotUtils
 # !alts is basically an alias for !alts list
 def bot_alts(riftBot, req):
 	if req.argList and req.argList[0] in ['-h', '--help']:
-		req.toGuild = req.fromGuild
-		req.toWhisp = req.fromWhisp
-		
 		func, opts, desc = __botFunctions__["alts"]
 		req.response += [desc]
 		req.response += ['Options: %s' % ",".join(__alts_options__)]
@@ -15,9 +12,6 @@ def bot_alts(riftBot, req):
 	
 # Add an alt / alts
 def bot_alts_add(riftBot, req):
-	req.toGuild = req.fromGuild
-	req.toWhisp = req.fromWhisp
-	
 	if not req.argList:
 		req.response += ['Usage: !alts add character [character ..]']
 		
@@ -102,9 +96,6 @@ def bot_alts_add(riftBot, req):
 
 # List a player's alts
 def bot_alts_list(riftBot, req):
-	req.toGuild = req.fromGuild
-	req.toWhisp = req.fromWhisp
-		
 	if req.argList and req.argList[0] in ['-h', '--help']:
 		func, opts, desc = __alts_options__["list"]
 		req.response += [desc]
@@ -142,9 +133,6 @@ def bot_alts_list(riftBot, req):
 
 # De-register an alt
 def bot_alts_remove(riftBot, req):
-	req.toGuild = req.fromGuild
-	req.toWhisp = req.fromWhisp
-	
 	if not req.argList:
 		req.response += ['Usage: !alts rem character [character ..]']
 		
@@ -190,9 +178,6 @@ def bot_alts_remove(riftBot, req):
 
 # Query if player is online
 def bot_is(riftBot, req):
-	req.toGuild = req.fromGuild
-	req.toWhisp = req.fromWhisp
-	
 	if not req.argList:
 		req.response += ['Usage: !is character [character ...]']
 		

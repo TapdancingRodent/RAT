@@ -59,11 +59,14 @@ class riftChatBot:
 
 		# Use the ticket to log into the chat server
 		print 'Logging in to chat server...'
-		verResp = requests.get('%s/chatservice/versionCheck' % self.chatURL, params={'version':'MAIN-108-55-A-569292'})
-
-		if verResp.json()['status'] == 'failure':
-			print 'Server has ended support for this version'
-			return 2
+		# This is where some kind of server timeout occurs (not sure why) so catch the exception
+		try:
+			verResp = requests.get('%s/chatservice/versionCheck' % self.chatURL, params={'version':'MAIN-108-55-A-569292'})
+			if verResp.json()['status'] == 'failure':
+				print 'Server has ended support for this version'
+				return 2
+		except requests.exceptions.ConnectionError:
+			return 3
 
 		chatLoginResp = requests.post('%s/chatservice/loginByTicket' % self.chatURL, data={'ticket':self.ticket})
 		self.cookie = chatLoginResp.cookies
@@ -88,7 +91,7 @@ class riftChatBot:
 
 		if self.charID == '':
 			print 'Character: %s not found' % self.charName
-			return 3
+			return 4
 		
 		# Login to the character
 		selCharResp = requests.get('%s/chatservice/chat/selectCharacter' % self.chatURL, params={'characterId':self.charID}, cookies=self.cookie)
@@ -96,7 +99,7 @@ class riftChatBot:
 		if selCharResp.status_code != 200:
 			print 'Login failed'
 			print selCharResp.text
-			return 4
+			return 5
 		
 		return 0
 		
@@ -123,6 +126,10 @@ class riftChatBot:
 							req.message = saxy.unescape(table['value']['message'][1:], {"&apos;":"'", "&quot;":'"'})
 							req.requester = table['value']['senderName'].lower()
 							req.requesterId = table['value']['senderId']
+							
+							# By default output to the requester
+							req.toGuild = req.fromGuild
+							req.toWhisp = req.fromWhisp
 							
 							return req
 							

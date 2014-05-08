@@ -7,9 +7,6 @@ __item_options_str__ = 'Options: -[~]crafted -[~]usable -id=? -class=? -slot=? -
 
 # Search for an item in the database
 def bot_item(riftBot, req):
-	req.toGuild = req.fromGuild
-	req.toWhisp = req.fromWhisp
-	
 	if not req.argList:
 		req.response += ['Usage: !item [options] [~]name']
 		req.response += [__item_options_str__]
@@ -108,9 +105,6 @@ def bot_item(riftBot, req):
 
 # Search for a number of items in the items database
 def bot_items(riftBot, req):
-	req.toGuild = req.fromGuild
-	req.toWhisp = req.fromWhisp
-	
 	if not req.argList:
 		req.response += ['Usage: !items [options] [~]name']
 		req.response += [__item_options_str__]
@@ -254,9 +248,6 @@ def bot_items_query(req, itemsDB):
 
 # Look up a recipe in the items database
 def bot_recipe(riftBot, req):
-	req.toGuild = req.fromGuild
-	req.toWhisp = req.fromWhisp
-	
 	if not req.argList:
 		req.response += ['Usage: !recipe [-]name']
 		
@@ -305,9 +296,6 @@ def bot_recipe(riftBot, req):
 
 # Look up a number of recipes in the items database
 def bot_recipes(riftBot, req):
-	req.toGuild = req.fromGuild
-	req.toWhisp = req.fromWhisp
-	
 	if not req.argList:
 		req.response += ['Usage: !recipe [~]name']
 		

@@ -9,18 +9,12 @@ def bot_cq(riftBot, req):
 
 # Output server date
 def bot_date(riftBot, req):
-	req.toGuild = req.fromGuild
-	req.toWhisp = req.fromWhisp
-	
 	dtdt = datetime.datetime
 	req.response += [dtdt.strftime(dtdt.utcnow(), '%d/%m/%y')]
 	return req
 		
 # Output server time
 def bot_time(riftBot, req):
-	req.toGuild = req.fromGuild
-	req.toWhisp = req.fromWhisp
-	
 	dtdt = datetime.datetime
 	req.response += [dtdt.strftime(dtdt.utcnow(), '%X')]
 	return req
@@ -28,9 +22,6 @@ def bot_time(riftBot, req):
 # !timers is basically an alias for !timers list
 def bot_timers(riftBot, req):
 	if req.argList and req.argList[0] in ['-h', '--help']:
-		req.toGuild = req.fromGuild
-		req.toWhisp = req.fromWhisp
-		
 		func, opts, desc = __botFunctions__["timers"]
 		req.response += [desc]
 		req.response += ['Options: %s' % ",".join(__timers_options__)]
@@ -40,9 +31,6 @@ def bot_timers(riftBot, req):
 	
 # Register a new timer
 def bot_timers_add(riftBot, req):
-	req.toGuild = req.fromGuild
-	req.toWhisp = req.fromWhisp
-	
 	if not req.argList:
 		req.response += ['Usage: !timers add hh:mm[:ss]/[Ah][Bm][Cs]']
 		
@@ -146,9 +134,6 @@ def bot_timers_add(riftBot, req):
 
 # List pending timers
 def bot_timers_list(riftBot, req):
-	req.toGuild = req.fromGuild
-	req.toWhisp = req.fromWhisp
-		
 	if req.argList and req.argList[0] in ['-h', '--help']:
 		func, opts, desc = __timers_options__["list"]
 		req.response += [desc]
@@ -181,9 +166,6 @@ def bot_timers_list(riftBot, req):
 
 # Remove a pending timer
 def bot_timers_remove(riftBot, req):
-	req.toGuild = req.fromGuild
-	req.toWhisp = req.fromWhisp
-	
 	if not req.argList:
 		req.response += ['Usage: !timers rem ID [ID ..]']
 		

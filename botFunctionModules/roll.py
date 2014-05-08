@@ -3,9 +3,6 @@ import random
 
 # Roll random numbers
 def bot_roll(riftBot, req):
-	req.toGuild = req.fromGuild
-	req.toWhisp = req.fromWhisp
-	
 	if not req.argList:
 		req.response += ['Usage: !roll [min] max']
 		

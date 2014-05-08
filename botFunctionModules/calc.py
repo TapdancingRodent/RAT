@@ -26,9 +26,6 @@ def evaluate(input):
 
 # Perform mathematical calculations
 def bot_calc(riftBot, req):
-	req.toGuild = req.fromGuild
-	req.toWhisp = req.fromWhisp
-	
 	if not req.argList:
 		req.response += ['Usage: !calc expr']
 		

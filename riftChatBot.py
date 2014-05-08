@@ -19,9 +19,6 @@ def resolve_function(argList):
 
 # Help function - mostly just an alias for the --help option
 def bot_help(riftBot, req):
-	req.toGuild = req.fromGuild
-	req.toWhisp = req.fromWhisp
-	
 	if req.argList:
 		func, opt, desc, remArgs = resolve_function(req.argList)
 		

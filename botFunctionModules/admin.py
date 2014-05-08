@@ -3,9 +3,6 @@ import riftChatBotUtils
 # !alts is basically an alias for !alts list
 def bot_admins(riftBot, req):
 	if req.argList and req.argList[0] in ['-h', '--help']:
-		req.toGuild = req.fromGuild
-		req.toWhisp = req.fromWhisp
-		
 		func, opts, desc = __botFunctions__["admins"]
 		req.response += [desc]
 		req.response += ['Options: %s' % ",".join(__admins_options__)]
@@ -15,9 +12,6 @@ def bot_admins(riftBot, req):
 	
 # Add an admin
 def bot_admins_add(riftBot, req):
-	req.toGuild = req.fromGuild
-	req.toWhisp = req.fromWhisp
-	
 	if not req.argList:
 		req.response += ['Usage: !admins add character']
 		
@@ -52,9 +46,6 @@ def bot_admins_add(riftBot, req):
 
 # List admins
 def bot_admins_list(riftBot, req):
-	req.toGuild = req.fromGuild
-	req.toWhisp = req.fromWhisp
-		
 	if req.argList and req.argList[0] in ['-h', '--help']:
 		func, opts, desc = __admins_options__["list"]
 		req.response += [desc]
@@ -73,9 +64,6 @@ def bot_admins_list(riftBot, req):
 
 # Register an admin's user ID
 def bot_admins_register(riftBot, req):
-	req.toGuild = req.fromGuild
-	req.toWhisp = req.fromWhisp
-		
 	if req.argList and req.argList[0] in ['-h', '--help']:
 		func, opts, desc = __admins_options__["register"]
 		req.response += [desc]
@@ -108,9 +96,6 @@ def bot_admins_register(riftBot, req):
 
 # Remove an admin
 def bot_admins_remove(riftBot, req):
-	req.toGuild = req.fromGuild
-	req.toWhisp = req.fromWhisp
-	
 	if not req.argList:
 		req.response += ['Usage: !admins rem character']
 		
@@ -148,13 +133,9 @@ def bot_admins_remove(riftBot, req):
 # Execute a function as an admin
 def bot_su(riftBot, req):
 	if not req.argList:
-		req.toGuild = req.fromGuild
-		req.toWhisp = req.fromWhisp
 		req.response += ['Usage: !su [-user=player] function ..']
 	
 	elif req.argList[0] in ['-h', '--help']:
-		req.toGuild = req.fromGuild
-		req.toWhisp = req.fromWhisp
 		func, opts, desc = __botFunctions__["su"]
 		req.response += [desc]
 		req.response += ['Usage: !su [-user=player] function ..']
@@ -182,9 +163,6 @@ def bot_su(riftBot, req):
 				req.response += ['Function ' + req.argList[0] + ' not recognised']
 				
 		elif cursor.execute("SELECT * FROM admins WHERE player=?", (req.requester,)):
-			req.toGuild = req.fromGuild
-			req.toWhisp = req.fromWhisp
-			
 			# The user is not yet fully authorised to run functions
 			cursor.execute("SELECT * FROM admins WHERE player=?", (req.requester,))
 			if cursor.fetchone():

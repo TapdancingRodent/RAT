@@ -2,9 +2,6 @@ import riftChatBotUtils
 
 # Returns the user's input string
 def bot_echo(riftBot, req):
-	req.toGuild = req.fromGuild
-	req.toWhisp = req.fromWhisp
-	
 	if not req.argList:
 		req.response += ['Usage: !echo text']
 		
@@ -20,9 +17,6 @@ def bot_echo(riftBot, req):
 
 # Says the user's input string in guild chat
 def bot_say(riftBot, req):
-	req.toGuild = req.fromGuild
-	req.toWhisp = req.fromWhisp
-	
 	if not req.argList:
 		req.response += ['Usage: !say text']
 		
