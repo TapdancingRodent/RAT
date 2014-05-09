@@ -254,7 +254,14 @@ def bot_is(riftBot, req):
 
 # Run on bot startup
 def __bot_init__(riftBot):
-	pass
+	DB = riftBot.dbConnect()
+	cursor = DB.cursor()
+	
+	cursor.execute("CREATE TABLE IF NOT EXISTS alts (player VARCHAR(30) PRIMARY KEY, altGroup INT)")
+	cursor.execute("CREATE TABLE IF NOT EXISTS altConfirmations (player VARCHAR(30), altGroup INT, playerConfirmed INT, groupConfirmed INT, CONSTRAINT pk_confID PRIMARY KEY (player, altGroup))")
+	
+	DB.commit()
+	DB.close()
 	
 # A list of options for the alts function
 __alts_options__ = {

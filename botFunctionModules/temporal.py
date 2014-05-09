@@ -251,6 +251,14 @@ def __bot_init__(riftBot):
 	# Retrieve any previously created timers and start them again
 	DB = riftBot.dbConnect()
 	cursor = DB.cursor()
+		
+	cursor.execute("CREATE TABLE IF NOT EXISTS timers (timerId INT PRIMARY KEY, player VARCHAR(30), playerId VARCHAR(30), sendGuild INT, message VARCHAR(255), timeStamp VARCHAR(30))")
+	cursor.execute("CREATE TABLE IF NOT EXISTS admins (player VARCHAR(30) PRIMARY KEY, playerId VARCHAR(30))")
+	
+	# Backwards compatibility patch-esque-ness
+	cols = [col[1] for col in cursor.execute("PRAGMA table_info(timers)").fetchall()]
+	if not 'timeStamp' in cols:
+		cursor.execute("ALTER TABLE timers ADD COLUMN timeStamp VARCHAR(30) DEFAULT '01/01/00'")
 	
 	# Retrieve old timers (i.e. in case we just crashed)
 	timers = cursor.execute("SELECT * FROM timers").fetchall()
@@ -277,6 +285,9 @@ def __bot_init__(riftBot):
 				
 		else:
 			cursor.execute("DELETE FROM timers WHERE timerid=?", (timer['timerId'],))
+	
+	DB.commit()
+	DB.close()
 
 # A list of options for the timers function
 __timers_options__ = {

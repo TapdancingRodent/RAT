@@ -357,7 +357,21 @@ def bot_quotes_upvote(riftBot, req):
 
 # Run on bot startup
 def __bot_init__(riftBot):
-	pass
+	DB = riftBot.dbConnect()
+	cursor = DB.cursor()
+	
+	# Backwards compatibility patch-esque-ness
+	cols = [col[1] for col in cursor.execute("PRAGMA table_info(quotes)").fetchall()]
+	if 'score' in cols:
+		cursor.execute("DROP TABLE IF EXISTS quotes")
+	cols = [col[1] for col in cursor.execute("PRAGMA table_info(quoteVotes)").fetchall()]
+	if not 'playerId' in cols:
+		cursor.execute("DROP TABLE IF EXISTS quoteVotes")
+	cursor.execute("CREATE TABLE IF NOT EXISTS quotes (quoteId INT PRIMARY KEY, player VARCHAR(30), submitter VARCHAR(30), quote VARCHAR(255))")
+	cursor.execute("CREATE TABLE IF NOT EXISTS quoteVotes (quoteId INT, player VARCHAR(30), playerId VARCHAR(30), rating INT, CONSTRAINT pk_voteID PRIMARY KEY (quoteId, player))")
+	
+	DB.commit()
+	DB.close()
 
 # __login_options__ = {
 	# 'clear'	: (bot_login_clear, [], "Clear your login message"),
