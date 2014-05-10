@@ -155,7 +155,7 @@ def bot_quotes_downvote(riftBot, req):
 			
 			if ID:
 				# Make sure the quote exists and downvote it
-				cursor.execute("SELECT * FROM quotes WHERE quoteId=?", (ID,))
+				cursor.execute("SELECT 1 FROM quotes WHERE quoteId=?", (ID,))
 				if cursor.fetchone():
 					cursor.execute("INSERT OR REPLACE INTO quoteVotes VALUES (?,?,?,?)", (ID, req.requester.lower(), req.requesterId, -1))
 					numAffected += 1
@@ -289,7 +289,7 @@ def bot_quotes_remove(riftBot, req):
 			
 			# Check that the quote exists and if it does remove it
 			if ID:
-				quote = cursor.execute("SELECT * FROM quotes WHERE quoteId=?", (ID))
+				quote = cursor.execute("SELECT * FROM quotes WHERE quoteId=?", (ID)).fetchone()
 				if quote:
 					if quote['player'] == req.requester or quote['submitter'] == req.requester:
 						cursor.execute("DELETE FROM quoteVotes WHERE quoteId=?", (ID,))
@@ -336,7 +336,7 @@ def bot_quotes_upvote(riftBot, req):
 			
 			if ID:
 				# Make sure the quote exists and upvote it
-				cursor.execute("SELECT * FROM quotes WHERE quoteId=?", (ID,))
+				cursor.execute("SELECT 1 FROM quotes WHERE quoteId=?", (ID,))
 				if cursor.fetchone():
 					cursor.execute("INSERT OR REPLACE INTO quoteVotes VALUES (?,?,?,?)", (ID, req.requester.lower(), req.requesterId, 1))
 					numAffected += 1

@@ -184,7 +184,7 @@ def bot_timers_remove(riftBot, req):
 		playerTimers = [timer['timerId'] for timer in timers]
 		for arg in req.argList:
 			# Get the timer the user specified
-			timer = cursor.execute("SELECT * FROM timers WHERE timerId=?", (int(arg),)).fetchone()
+			timer = cursor.execute("SELECT 1 FROM timers WHERE timerId=?", (int(arg),)).fetchone()
 			if timer:
 				try:
 					if int(arg) in playerTimers or req.su:

@@ -28,7 +28,7 @@ def bot_admins_add(riftBot, req):
 		if req.su:
 			for arg in req.argList:
 				# Add the admin, send a confirmation message
-				if cursor.execute("SELECT * FROM admins WHERE player=?", (arg.lower(),)).fetchone():
+				if cursor.execute("SELECT 1 FROM admins WHERE player=?", (arg.lower(),)).fetchone():
 					req.response += ['%s is already an admin' % arg.title()]
 					
 				else:
@@ -114,7 +114,7 @@ def bot_admins_remove(riftBot, req):
 		if req.su:
 			for arg in req.argList:
 				# Remove the admin, send a confirmation message
-				if cursor.execute("SELECT * FROM admins WHERE player=?", (arg.lower(),)).fetchone():
+				if cursor.execute("SELECT 1 FROM admins WHERE player=?", (arg.lower(),)).fetchone():
 					cursor.execute("DELETE FROM admins WHERE player=?", (arg.lower(),))
 					req.response += ['%s removed' % arg.title()]
 					
@@ -145,7 +145,7 @@ def bot_su(riftBot, req):
 		cursor = DB.cursor()
 		
 		# Look up the player in the admins database
-		cursor.execute("SELECT * FROM admins WHERE player=? AND playerId=?", (req.requester, req.requesterId))
+		cursor.execute("SELECT 1 FROM admins WHERE player=? AND playerId=?", (req.requester, req.requesterId))
 		if cursor.fetchone():
 			if len(req.argList[0]) > 7 and req.argList[0][0:6] == "-user=":
 				req.requester = req.argList[0][6:].lower()
@@ -162,10 +162,10 @@ def bot_su(riftBot, req):
 			else:
 				req.response += ['Function ' + req.argList[0] + ' not recognised']
 				
-		elif cursor.execute("SELECT * FROM admins WHERE player=?", (req.requester,)):
+		elif cursor.execute("SELECT 1 FROM admins WHERE player=?", (req.requester,)).fetchone():
 			# The user is not yet fully authorised to run functions
-			cursor.execute("SELECT * FROM admins WHERE player=?", (req.requester,))
-			if cursor.fetchone():
+			
+			if cursor.execute("SELECT 1 FROM admins WHERE player=?", (req.requester,)).fetchone():
 				# At this point it seems most likely that someone is trying to run su inside su
 				# So lets make a toothless threat that there is any kind of oversight (hilarious)
 				req.response += ['Player ID information resolved inconsistently, this request has been logged' % req.requester.title()]

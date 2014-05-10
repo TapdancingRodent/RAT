@@ -251,7 +251,6 @@ def bot_items_query(req, itemsDB):
 		itemQuery = "SELECT Items.ItemKey AS ItemKey, Name FROM Items LEFT JOIN ItemCallings ON Items.ItemKey=ItemCallings.ItemKey WHERE %s LIMIT 100" % " AND ".join(itemQuery)
 	else:
 		itemQuery = "SELECT Items.ItemKey AS ItemKey, Name FROM Items LEFT JOIN ItemCallings ON Items.ItemKey=ItemCallings.ItemKey LIMIT 100"
-		
 	
 	return cursor.execute(itemQuery, itemValue)
 

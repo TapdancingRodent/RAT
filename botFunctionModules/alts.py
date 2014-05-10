@@ -152,7 +152,7 @@ def bot_alts_remove(riftBot, req):
 			for alt in argList:
 				# Check that the alt is in the user's group
 				for alt in req.argList:
-					isAlt = cursor.execute("SELECT * FROM alts WHERE player=? AND altGroup=?", (alt.lower(), altGroup)).fetchone()
+					isAlt = cursor.execute("SELECT 1 FROM alts WHERE player=? AND altGroup=?", (alt.lower(), altGroup)).fetchone()
 					if isAlt or req.su:
 						# Purge the alt from the database
 						cursor.execute("DELETE FROM alts WHERE player=? AND altGroup=?", (alt.lower(), altGroup))
