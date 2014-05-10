@@ -55,7 +55,7 @@ class riftChatBot:
 			print authLoginResp.text
 			return 1
 
-		self.ticket = authLoginResp.text
+		self.ticket = authLoginResp.content
 
 		# Use the ticket to log into the chat server
 		print 'Logging in to chat server...'
@@ -74,7 +74,11 @@ class riftChatBot:
 		# Log into the chosen character
 		print 'Selecting character...'
 		charsResp = requests.get('%s/chatservice/chat/characters' % self.chatURL, cookies=self.cookie)
-
+		
+		if charsResp.status_code != 200:
+			print charsResp.text
+			return 4
+		
 		charList = charsResp.json()['data']
 		
 		# Find accurate information about the player character
@@ -91,7 +95,8 @@ class riftChatBot:
 
 		if self.charID == '':
 			print 'Character: %s not found' % self.charName
-			return 4
+			print 'Try specifying your locale (eu/us) as a fourth argument'
+			return 5
 		
 		# Login to the character
 		selCharResp = requests.get('%s/chatservice/chat/selectCharacter' % self.chatURL, params={'characterId':self.charID}, cookies=self.cookie)
@@ -99,7 +104,7 @@ class riftChatBot:
 		if selCharResp.status_code != 200:
 			print 'Login failed'
 			print selCharResp.text
-			return 5
+			return 6
 		
 		return 0
 		
