@@ -138,11 +138,29 @@ for event, item in xmlTree:
 		if item.find('Name') is not None and item.find('Name').find(language) is not None:
 			itemQuery += ", Name"
 			itemValue += (item.find('Name').find(language).text,)
-			
+		
+		# Stats includes a very strange corner case for spell power which is stored strangely
+		spellDamage = None
+		if item.find('SpellDamage') is not None:
+			spellDamage = int(item.find('SpellDamage').text)
+		
+		spellPowerAdded = False
 		if item.find('OnEquip') is not None:
 			for stat in item.find('OnEquip')._children:
-				cursor.execute("INSERT INTO ItemStats VALUES (?,?,?)", (ItemKey, stat.tag, stat.text))
-			
+				if stat.tag == "SpellPower":
+					if spellDamage:
+						cursor.execute("INSERT INTO ItemStats VALUES (?,?,?)", (ItemKey, stat.tag, int(stat.text) + spellDamage))
+						spellPowerAdded = True
+						
+					else:
+						cursor.execute("INSERT INTO ItemStats VALUES (?,?,?)", (ItemKey, stat.tag, stat.text))
+					
+				else:
+					cursor.execute("INSERT INTO ItemStats VALUES (?,?,?)", (ItemKey, stat.tag, stat.text))
+					
+		if spellDamage and not spellPowerAdded:
+			cursor.execute("INSERT INTO ItemStats VALUES (?,?,?)", (ItemKey, "SpellPower", spellDamage))
+		
 		if item.find('OnUse') is not None:
 			if item.find('OnUse').find('Ability') is not None:
 				itemQuery += ", OnUse"
@@ -240,6 +258,7 @@ if os.path.exists('discoveries.db'):
 		try:
 			os.remove('discoveries.db')
 			oldDBinUse = False
+			
 		except WindowsError:
 			pass
 
