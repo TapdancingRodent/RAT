@@ -8,14 +8,14 @@ __item_options_str__ = 'Options: -[~]crafted -[~]usable -id=? -class=? -slot=? -
 # Search for an item in the database
 def bot_item(riftBot, req):
 	if not req.argList:
-		req.response += ['Usage: !item [options] [~]name']
-		req.response += [__item_options_str__]
+		req.response.append('Usage: !item [options] [~]name')
+		req.response.append(__item_options_str__)
 		
 	elif req.argList[0] in ['-h', '--help']:
 		func, opts, desc = __botFunctions__["item"]
-		req.response += [desc]
-		req.response += ['Usage: !item [options] [~]name']
-		req.response += [__item_options_str__]
+		req.response.append(desc)
+		req.response.append('Usage: !item [options] [~]name')
+		req.response.append(__item_options_str__)
 	
 	else:
 		# Load the items database
@@ -34,7 +34,7 @@ def bot_item(riftBot, req):
 					cursor.execute("SELECT * FROM Items WHERE ItemKey=?", (ItemKey,))
 					item = cursor.fetchone()
 					
-					req.response += [item['Name']]
+					req.response.append(item['Name'])
 					
 					# Collect item tags
 					tagsList = []
@@ -66,7 +66,7 @@ def bot_item(riftBot, req):
 						
 					tags = ", ".join(tagsList)
 					if tags:
-						req.response += [tags]
+						req.response.append(tags)
 					
 					# List the item's stats
 					cursor.execute("SELECT * FROM ItemStats WHERE ItemKey=?", (ItemKey,))
@@ -81,39 +81,42 @@ def bot_item(riftBot, req):
 							statsList += ["%s %i" % (stat['Stat'], stat['StatValue'])]
 					
 					if stats:
-						req.response += [", ".join([s for s in sorted(statsList)])]
-						
+						req.response.append(", ".join([s for s in sorted(statsList)]))
+					
 					if item['OnUse']:
-						req.response += ["Use: %s" % item['OnUse']]
+						req.response.append("Use: %s" % item['OnUse'])
+					
+					if item['OnEquip']:
+						req.response.append("Passive: %s" % item['OnEquip'])
 					
 					# Look up item set information (Gilded Battle Gear etc)
 					if item['SetId']:
-						req.response += ["Set: %s" % item['SetName']]
+						req.response.append("Set: %s" % item['SetName'])
 						if item['GivesSetBonus']:
 							cursor.execute("SELECT * FROM ItemSets WHERE ItemKey=?", (ItemKey,))
 							bonuses = cursor.fetchall()
 							for bonus in bonuses:
-								req.response += ["%i: %s" % (bonus['Pieces'], bonus['Bonus'])]
+								req.response.append("%i: %s" % (bonus['Pieces'], bonus['Bonus']))
 						
 				else:
-					req.response += ['No items found']
+					req.response.append('No items found')
 		
 		else:
-			req.response += ['Items database not found']
+			req.response.append('Items database not found')
 			
 	return req
 
 # Search for a number of items in the items database
 def bot_items(riftBot, req):
 	if not req.argList:
-		req.response += ['Usage: !items [options] [~]name']
-		req.response += [__item_options_str__]
+		req.response.append('Usage: !items [options] [~]name')
+		req.response.append(__item_options_str__)
 		
 	elif req.argList[0] in ['-h', '--help']:
 		func, opts, desc = __botFunctions__["items"]
-		req.response += [desc]
-		req.response += ['Usage: !items [options] [~]name']
-		req.response += [__item_options_str__]
+		req.response.append(desc)
+		req.response.append('Usage: !items [options] [~]name')
+		req.response.append(__item_options_str__)
 		
 	
 	else:
@@ -126,16 +129,16 @@ def bot_items(riftBot, req):
 				itemList = bot_items_query(req, itemsDB).fetchall()
 				if itemList:
 					for n, item in enumerate(itemList):
-						req.response += [item['Name']]
+						req.response.append(item['Name'])
 						if n == 2 and len(itemList) > 4:
-							req.response += ['%i entries truncated' % (len(itemList)-n-1)]
+							req.response.append('%i entries truncated' % (len(itemList)-n-1))
 							break
 						
 				else:
-					req.response += ['No items found']
+					req.response.append('No items found')
 			
 		else:
-			req.response += ['Items database not found']
+			req.response.append('Items database not found')
 			
 	return req
 
@@ -169,10 +172,10 @@ def bot_items_query(req, itemsDB):
 						itemQuery += ["RequiredLevel<>?"]
 					
 					else:
-						req.response += ['Unrecognised level argument']
+						req.response.append('Unrecognised level argument')
 						
 				except ValueError:
-					req.response += ['Error: Level given non-integer argument']
+					req.response.append('Error: Level given non-integer argument')
 			
 			elif '=' in optStr:
 				# Class requirement options
@@ -234,7 +237,7 @@ def bot_items_query(req, itemsDB):
 				itemValue += (0,)
 				
 			else:
-				req.response += ['Unrecognised option: %s' % arg]
+				req.response.append('Unrecognised option: %s' % arg)
 				
 		else:
 		
@@ -248,21 +251,22 @@ def bot_items_query(req, itemsDB):
 				itemValue += ("%%%s%%" % arg,)
 			
 	if itemQuery:
-		itemQuery = "SELECT Items.ItemKey AS ItemKey, Name FROM Items LEFT JOIN ItemCallings ON Items.ItemKey=ItemCallings.ItemKey WHERE %s LIMIT 100" % " AND ".join(itemQuery)
+		itemQuery = "SELECT ItemKey, Name FROM Items LEFT JOIN ItemCallings USING (ItemKey) WHERE %s LIMIT 100" % " AND ".join(itemQuery)
+	
 	else:
-		itemQuery = "SELECT Items.ItemKey AS ItemKey, Name FROM Items LEFT JOIN ItemCallings ON Items.ItemKey=ItemCallings.ItemKey LIMIT 100"
+		itemQuery = "SELECT ItemKey, Name FROM Items LEFT JOIN ItemCallings USING (ItemKey) LIMIT 100"
 	
 	return cursor.execute(itemQuery, itemValue)
 
 # Look up a recipe in the items database
 def bot_recipe(riftBot, req):
 	if not req.argList:
-		req.response += ['Usage: !recipe [~]name']
+		req.response.append('Usage: !recipe [~]name')
 		
 	elif req.argList[0] in ['-h', '--help']:
 		func, opts, desc = __botFunctions__["recipe"]
-		req.response += [desc]
-		req.response += ['Usage: !recipe [~]name']
+		req.response.append(desc)
+		req.response.append('Usage: !recipe [~]name')
 	
 	else:
 		# Load the items database
@@ -281,33 +285,33 @@ def bot_recipe(riftBot, req):
 					recipe = cursor.fetchone()
 					ItemKey = recipe['ItemKey']
 					
-					req.response += ["Recipe: %s (%i %s)" % (recipe['Name'], recipe['RequiredSkillPoints'], recipe['RequiredSkill'])]
+					req.response.append("Recipe: %s (%i %s)" % (recipe['Name'], recipe['RequiredSkillPoints'], recipe['RequiredSkill']))
 					
 					# Collect ingredients
 					cursor.execute("SELECT * FROM Ingredients WHERE RecipeKey=?", (RecipeKey,))
 					ingredients = cursor.fetchall()
-					req.response += [", ".join(["%i %s" % (ingr['Quantity'], ingr['Name']) for ingr in ingredients])]
+					req.response.append(", ".join(["%i %s" % (ingr['Quantity'], ingr['Name']) for ingr in ingredients]))
 					
 					cursor.execute("SELECT Name FROM Items WHERE ItemKey=?", (ItemKey,))
-					req.response += ["Creates: %s %s" % (str(recipe['Quantity']), cursor.fetchone()['Name'])]
+					req.response.append("Creates: %s %s" % (str(recipe['Quantity']), cursor.fetchone()['Name']))
 					
 				else:
-					req.response += ['No recipes found']
+					req.response.append('No recipes found')
 		
 		else:
-			req.response += ['Recipes database not found']
+			req.response.append('Recipes database not found')
 		
 	return req
 
 # Look up a number of recipes in the items database
 def bot_recipes(riftBot, req):
 	if not req.argList:
-		req.response += ['Usage: !recipe [~]name']
+		req.response.append('Usage: !recipe [~]name')
 		
 	elif req.argList[0] in ['-h', '--help']:
 		func, opts, desc = __botFunctions__["recipes"]
-		req.response += [desc]
-		req.response += ['Usage: !recipes [~]name']
+		req.response.append(desc)
+		req.response.append('Usage: !recipes [~]name')
 	
 	else:
 		# Load the items database
@@ -320,15 +324,15 @@ def bot_recipes(riftBot, req):
 				if recipeList:
 					# Output them
 					for n, recipe in enumerate(recipeList):
-						req.response += [recipe['Name']]
+						req.response.append(recipe['Name'])
 						if n == 2 and len(recipeList) > 4:
-							req.response += ['%i entries truncated' % (len(recipeList)-n-1)]
+							req.response.append('%i entries truncated' % (len(recipeList)-n-1))
 							break
 						
 				else:
-					req.response += ['No recipes found']
+					req.response.append('No recipes found')
 		else:
-			req.response += ['Recipes database not found']
+			req.response.append('Recipes database not found')
 			
 	return req
 	

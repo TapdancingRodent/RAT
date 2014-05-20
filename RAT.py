@@ -1,5 +1,40 @@
-import sys, pkgutil, shlex, os
+import sys, pkgutil, os
 import riftChatBotUtils, botFunctionModules
+
+# A split function which preserves quotes substring
+def intelliSplit(msg):
+	n = 0
+	args = []
+	quoteStack = []
+	while n < len(msg):
+		if msg[n] == '\\':
+			n += 1
+		
+		elif msg[n] == '"':
+			if quoteStack and quoteStack[-1] == '"':
+				quoteStack.pop()
+				
+			else:
+				quoteStack.append('"')
+		
+		elif msg[n] == "'":
+			if quoteStack and quoteStack[-1] == "'":
+				quoteStack.pop()
+				
+			else:
+				quoteStack.append("'")
+			
+		elif not quoteStack and msg[n] == " ":
+			args.append(msg[0:n])
+			msg = msg[n+1:]
+			n = 0
+		
+		n += 1
+	
+	if msg:
+		args.append(msg)
+	
+	return args
 
 # Look up a function (including sub-options)
 def resolve_function(argList):
@@ -79,13 +114,7 @@ if __name__ == "__main__":
 			print 'Received message: ' + req.message
 			
 			# Parse the request
-			lex = shlex.shlex(req.message)
-			lex.quotes = '"'
-			lex.whitespace_split = True
-			lex.commentors = ''
-			lex.escapedquotes = ''
-			req.argList = list(lex)
-			req.argList = [arg.strip('"') for arg in req.argList]
+			req.argList = [arg.replace('"', '').replace("'", "") for arg in intelliSplit(req.message)]
 			
 			# If "!" was the query string, instead give help
 			if not req.argList:

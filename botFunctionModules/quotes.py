@@ -7,8 +7,8 @@ __quotes_options_str__ = 'Options: -player=? -submitter=? -score(<,>,=,~)?'
 # def bot_login(riftBot, req):
 	# if req.argList and req.argList[0] in ['-h', '--help']:
 		# func, opts, desc = __botFunctions__["login"]
-		# req.response += [desc]
-		# req.response += ['Options: %s' % ",".join(__login_options__)]
+		# req.response.append(desc)
+		# req.response.append('Options: %s' % ",".join(__login_options__))
 		# return req
 		
 	# return bot_login_show(riftBot, req)
@@ -29,8 +29,8 @@ __quotes_options_str__ = 'Options: -player=? -submitter=? -score(<,>,=,~)?'
 def bot_quote(riftBot, req):
 	if not req.argList or req.argList[0] in ['-h', '--help']:
 		func, opts, desc = __botFunctions__["quote"]
-		req.response += [desc]
-		req.response += ['Usage: !quote player']
+		req.response.append(desc)
+		req.response.append('Usage: !quote player')
 		
 	else:
 		DB = riftBot.dbConnect()
@@ -57,12 +57,12 @@ def bot_quote(riftBot, req):
 			# Store the new quote
 			cursor.execute("INSERT INTO quotes VALUES (?,?,?,?)", (quoteId, player, req.requester, quoteText))
 			cursor.execute("INSERT INTO quoteVotes VALUES (?,?,?,?)", (quoteId, req.requester, req.requesterId, 1))
-			req.response += ['Quote added:']
-			req.response += ['%i | "[%s]: %s"' % (quoteId, player.title(), quoteText)]
+			req.response.append('Quote added:')
+			req.response.append('%i | "[%s]: %s"' % (quoteId, player.title(), quoteText))
 			DB.commit()
 		
 		else:
-			req.response += ['No messages found for player: %s' % player.title()]
+			req.response.append('No messages found for player: %s' % player.title())
 		
 		DB.close()
 		
@@ -72,9 +72,9 @@ def bot_quote(riftBot, req):
 def bot_quotes(riftBot, req):
 	if not req.argList or req.argList[0] in ['-h', '--help']:
 		func, opts, desc = __botFunctions__["quotes"]
-		req.response += [desc]
-		req.response += ['Usage: !quotes [options] [[~]text ..]']
-		req.response += [__quotes_options_str__]
+		req.response.append(desc)
+		req.response.append('Usage: !quotes [options] [[~]text ..]')
+		req.response.append(__quotes_options_str__)
 		
 	else:
 		DB = riftBot.dbConnect()
@@ -83,13 +83,13 @@ def bot_quotes(riftBot, req):
 		quotesList = bot_quotes_query(req, DB).fetchall()
 		if quotesList:
 			for n, quote in enumerate(quotesList):
-				req.response += ['%i | "[%s]: %s" (%i)' % (quote['quoteId'], quote['player'].title(), quote['quote'], quote['score'])]
+				req.response.append('%i | "[%s]: %s" (%i)' % (quote['quoteId'], quote['player'].title(), quote['quote'], quote['score']))
 				if n == 2 and len(quotesList) > 4:
-					req.response += ['%i entries truncated' % (len(quotesList)-n-1)]
+					req.response.append('%i entries truncated' % (len(quotesList)-n-1))
 					break
 				
 		else:
-			req.response += ['No quotes found']
+			req.response.append('No quotes found')
 				
 		DB.close()
 			
@@ -99,8 +99,8 @@ def bot_quotes(riftBot, req):
 def bot_quotes_add(riftBot, req):
 	if not req.argList or req.argList[0] in ['-h', '--help']:
 		func, opts, desc = __quotes_options__["add"]
-		req.response += [desc]
-		req.response += ['Usage: !quotes add player text']
+		req.response.append(desc)
+		req.response.append('Usage: !quotes add player text')
 		
 	else:
 		DB = riftBot.dbConnect()
@@ -120,12 +120,12 @@ def bot_quotes_add(riftBot, req):
 			# Store the new quote
 			cursor.execute("INSERT INTO quotes VALUES (?,?,?,?)", (quoteId, player, req.requester, quoteText))
 			cursor.execute("INSERT INTO quoteVotes VALUES (?,?,?,?)", (quoteId, req.requester, req.requesterId, 1))
-			req.response += ['Quote added:']
-			req.response += ['%i | "[%s]: %s"' % (quoteId, player.title(), quoteText)]
+			req.response.append('Quote added:')
+			req.response.append('%i | "[%s]: %s"' % (quoteId, player.title(), quoteText))
 			DB.commit()
 		
 		else:
-			req.response += ['Error: no quote supplied']
+			req.response.append('Error: no quote supplied')
 		
 		DB.commit()
 		DB.close()
@@ -136,8 +136,8 @@ def bot_quotes_add(riftBot, req):
 def bot_quotes_downvote(riftBot, req):
 	if not req.argList or req.argList[0] in ['-h', '--help']:
 		func, opts, desc = __quote_options__["downvote"]
-		req.response += [desc]
-		req.response += ['Usage: !quotes downvote ID [ID ..]']
+		req.response.append(desc)
+		req.response.append('Usage: !quotes downvote ID [ID ..]')
 		
 	else:
 		DB = riftBot.dbConnect()
@@ -151,7 +151,7 @@ def bot_quotes_downvote(riftBot, req):
 			try:
 				ID = arg
 			except ValueError:
-				req.response += ['Synatax Error: %s not recognised' % arg]
+				req.response.append('Synatax Error: %s not recognised' % arg)
 			
 			if ID:
 				# Make sure the quote exists and downvote it
@@ -161,13 +161,13 @@ def bot_quotes_downvote(riftBot, req):
 					numAffected += 1
 				
 				else:
-					req.response += ['No quote exists with ID %i' % ID]
+					req.response.append('No quote exists with ID %i' % ID)
 		
 		if numAffected:
 			if numAffected == 1:
-				req.response += ['1 downvote registered']
+				req.response.append('1 downvote registered')
 			else:
-				req.response += ['%i downvotes registered' % numAffected]
+				req.response.append('%i downvotes registered' % numAffected)
 		
 		DB.commit()
 		DB.close()
@@ -178,8 +178,8 @@ def bot_quotes_downvote(riftBot, req):
 def bot_quotes_purge(riftBot, req):
 	if req.argList and req.argList[0] in ['-h', '--help']:
 		func, opts, desc = __quotes_options__["purge"]
-		req.response += [desc]
-		req.response += ['Usage: !quotes purge']
+		req.response.append(desc)
+		req.response.append('Usage: !quotes purge')
 		
 	else:
 		DB = riftBot.dbConnect()
@@ -190,7 +190,7 @@ def bot_quotes_purge(riftBot, req):
 		for quote in quotes:
 			cursor.execute("DELETE FROM quoteVotes WHERE quoteId=?", (quote['quoteId'],))
 		cursor.execute("DELETE FROM quotes WHERE player=?", (req.requester,))
-		req.response += ['%i quotes purged' % cursor.rowcount]
+		req.response.append('%i quotes purged' % cursor.rowcount)
 				
 		DB.commit()
 		DB.close()
@@ -228,10 +228,10 @@ def bot_quotes_query(req, quotesDB):
 						itemQuery += ["score<>?"]
 					
 					else:
-						req.response += ['Unrecognised score argument']
+						req.response.append('Unrecognised score argument')
 						
 				except ValueError:
-					req.response += ['Error: Score given non-integer argument']
+					req.response.append('Error: Score given non-integer argument')
 			
 			# Options based on origin
 			if '=' in optStr:
@@ -245,7 +245,7 @@ def bot_quotes_query(req, quotesDB):
 					quotesValue += (val,)
 				
 			else:
-				req.response += ['Unrecognised option: %s' % arg]
+				req.response.append('Unrecognised option: %s' % arg)
 				
 		else:
 		
@@ -260,9 +260,9 @@ def bot_quotes_query(req, quotesDB):
 		
 	# Output
 	if quotesQuery:
-		quotesQuery = "SELECT quotes.quoteId as quoteId, quotes.player AS player, quotes.quote AS quote, SUM(rating) AS score FROM quotes LEFT JOIN quoteVotes ON quotes.quoteId=quoteVotes.quoteId WHERE %s GROUP BY quoteId ORDER BY score DESC LIMIT 100" % " AND ".join(quotesQuery)
+		quotesQuery = "SELECT quotes.quoteId as quoteId, quotes.player AS player, quotes.quote AS quote, SUM(rating) AS score FROM quotes JOIN quoteVotes USING (quoteId) WHERE %s GROUP BY quoteId ORDER BY score DESC LIMIT 100" % " AND ".join(quotesQuery)
 	else:
-		quotesQuery = "SELECT quotes.quoteId as quoteId, quotes.player AS player, quotes.quote AS quote, SUM(rating) AS score FROM quotes LEFT JOIN quoteVotes ON quotes.quoteId=quoteVotes.quoteId GROUP BY quoteId ORDER BY score DESC LIMIT 100"
+		quotesQuery = "SELECT quotes.quoteId as quoteId, quotes.player AS player, quotes.quote AS quote, SUM(rating) AS score FROM quotes JOIN quoteVotes USING (quoteId) GROUP BY quoteId ORDER BY score DESC LIMIT 100"
 	
 	return cursor.execute(quotesQuery, quotesValue)
 
@@ -270,8 +270,8 @@ def bot_quotes_query(req, quotesDB):
 def bot_quotes_remove(riftBot, req):
 	if not req.argList or req.argList[0] in ['-h', '--help']:
 		func, opts, desc = __quotes_options__["remove"]
-		req.response += [desc]
-		req.response += ['Usage: !quotes remove ID [ID ..]']
+		req.response.append(desc)
+		req.response.append('Usage: !quotes remove ID [ID ..]')
 		
 	else:
 		DB = riftBot.dbConnect()
@@ -285,7 +285,7 @@ def bot_quotes_remove(riftBot, req):
 			try:
 				ID = arg
 			except ValueError:
-				req.response += ['Synatax Error: %s not recognised' % arg]
+				req.response.append('Synatax Error: %s not recognised' % arg)
 			
 			# Check that the quote exists and if it does remove it
 			if ID:
@@ -297,16 +297,16 @@ def bot_quotes_remove(riftBot, req):
 						numAffected += cursor.rowcount
 						
 					else:
-						req.response += ['You do not own quote with ID %i' % ID]
+						req.response.append('You do not own quote with ID %i' % ID)
 				
 				else:
-					req.response += ['No quote exists with ID %i' % ID]
+					req.response.append('No quote exists with ID %i' % ID)
 		
 		if numAffected:
 			if numAffected == 1:
-				req.response += ['1 downvote registered']
+				req.response.append('1 downvote registered')
 			else:
-				req.response += ['%i downvotes registered' % numAffected]
+				req.response.append('%i downvotes registered' % numAffected)
 		
 		DB.commit()
 		DB.close()
@@ -317,8 +317,8 @@ def bot_quotes_remove(riftBot, req):
 def bot_quotes_upvote(riftBot, req):
 	if not req.argList or req.argList[0] in ['-h', '--help']:
 		func, opts, desc = __quotes_options__["upvote"]
-		req.response += [desc]
-		req.response += ['Usage: !quotes upvote ID [ID ..]']
+		req.response.append(desc)
+		req.response.append('Usage: !quotes upvote ID [ID ..]')
 		
 	else:
 		DB = riftBot.dbConnect()
@@ -332,7 +332,7 @@ def bot_quotes_upvote(riftBot, req):
 			try:
 				ID = arg
 			except ValueError:
-				req.response += ['Synatax Error: %s not recognised' % arg]
+				req.response.append('Synatax Error: %s not recognised' % arg)
 			
 			if ID:
 				# Make sure the quote exists and upvote it
@@ -342,13 +342,13 @@ def bot_quotes_upvote(riftBot, req):
 					numAffected += 1
 				
 				else:
-					req.response += ['No quote exists with ID %i' % ID]
+					req.response.append('No quote exists with ID %i' % ID)
 		
 		if numAffected:
 			if numAffected == 1:
-				req.response += ['1 upvote registered']
+				req.response.append('1 upvote registered')
 			else:
-				req.response += ['%i upvotes registered' % numAffected]
+				req.response.append('%i upvotes registered' % numAffected)
 		
 		DB.commit()
 		DB.close()
@@ -360,13 +360,6 @@ def __bot_init__(riftBot):
 	DB = riftBot.dbConnect()
 	cursor = DB.cursor()
 	
-	# Backwards compatibility patch-esque-ness
-	cols = [col[1] for col in cursor.execute("PRAGMA table_info(quotes)").fetchall()]
-	if 'score' in cols:
-		cursor.execute("DROP TABLE IF EXISTS quotes")
-	cols = [col[1] for col in cursor.execute("PRAGMA table_info(quoteVotes)").fetchall()]
-	if not 'playerId' in cols:
-		cursor.execute("DROP TABLE IF EXISTS quoteVotes")
 	cursor.execute("CREATE TABLE IF NOT EXISTS quotes (quoteId INT PRIMARY KEY, player VARCHAR(30), submitter VARCHAR(30), quote VARCHAR(255))")
 	cursor.execute("CREATE TABLE IF NOT EXISTS quoteVotes (quoteId INT, player VARCHAR(30), playerId VARCHAR(30), rating INT, CONSTRAINT pk_voteID PRIMARY KEY (quoteId, player))")
 	

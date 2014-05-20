@@ -4,12 +4,12 @@ import random
 # Roll random numbers
 def bot_roll(riftBot, req):
 	if not req.argList:
-		req.response += ['Usage: !roll [min] max']
+		req.response.append('Usage: !roll [min] max')
 		
 	elif req.argList[0] in ['-h', '--help']:
 		func, opts, desc = __botFunctions__["roll"]
-		req.response += [desc]
-		req.response += ['Usage: !roll [min] max']
+		req.response.append(desc)
+		req.response.append('Usage: !roll [min] max')
 	
 	else:
 		# Get min and max from strings
@@ -23,10 +23,10 @@ def bot_roll(riftBot, req):
 				max = int(req.argList[1])
 			
 			# Return a random number
-			req.response += ['I rolled %i' % random.randint(min, max)]
+			req.response.append('I rolled %i' % random.randint(min, max))
 			
 		except:
-			req.response += ['Syntax Error']
+			req.response.append('Syntax Error')
 			
 	return req
 

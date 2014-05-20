@@ -4,8 +4,8 @@ import riftChatBotUtils
 def bot_admins(riftBot, req):
 	if req.argList and req.argList[0] in ['-h', '--help']:
 		func, opts, desc = __botFunctions__["admins"]
-		req.response += [desc]
-		req.response += ['Options: %s' % ",".join(__admins_options__)]
+		req.response.append(desc)
+		req.response.append('Options: %s' % ",".join(__admins_options__))
 		return req
 		
 	return bot_admins_list(riftBot, req)
@@ -13,12 +13,12 @@ def bot_admins(riftBot, req):
 # Add an admin
 def bot_admins_add(riftBot, req):
 	if not req.argList:
-		req.response += ['Usage: !admins add character']
+		req.response.append('Usage: !admins add character')
 		
 	elif req.argList[0] in ['-h', '--help']:
 		func, opts, desc = __admins_options__["add"]
-		req.response += [desc]
-		req.response += ['Usage: !admins add character']
+		req.response.append(desc)
+		req.response.append('Usage: !admins add character')
 				
 	else:
 		DB = riftBot.dbConnect()
@@ -29,16 +29,16 @@ def bot_admins_add(riftBot, req):
 			for arg in req.argList:
 				# Add the admin, send a confirmation message
 				if cursor.execute("SELECT 1 FROM admins WHERE player=?", (arg.lower(),)).fetchone():
-					req.response += ['%s is already an admin' % arg.title()]
+					req.response.append('%s is already an admin' % arg.title())
 					
 				else:
 					cursor.execute("INSERT INTO admins (player) VALUES (?)", (arg.lower(),))
-					req.response += ['%s added (requires registration)' % arg.title()]
+					req.response.append('%s added (requires registration)' % arg.title())
 				
 			DB.commit()
 			
 		else:
-			req.response += ['Managing admins must be done as a super user']
+			req.response.append('Managing admins must be done as a super user')
 		
 		DB.close()
 			
@@ -48,15 +48,15 @@ def bot_admins_add(riftBot, req):
 def bot_admins_list(riftBot, req):
 	if req.argList and req.argList[0] in ['-h', '--help']:
 		func, opts, desc = __admins_options__["list"]
-		req.response += [desc]
-		req.response += ['Usage: !admins list']
+		req.response.append(desc)
+		req.response.append('Usage: !admins list')
 	
 	else:
 		DB = riftBot.dbConnect()
 		cursor = DB.cursor()
 		
 		admins = cursor.execute("SELECT player FROM admins").fetchall()
-		req.response += ['Admins: %s' % ", ".join([admin['player'].title() for admin in admins])]
+		req.response.append('Admins: %s' % ", ".join([admin['player'].title() for admin in admins]))
 		
 		DB.close()
 		
@@ -66,8 +66,8 @@ def bot_admins_list(riftBot, req):
 def bot_admins_register(riftBot, req):
 	if req.argList and req.argList[0] in ['-h', '--help']:
 		func, opts, desc = __admins_options__["register"]
-		req.response += [desc]
-		req.response += ['Usage: !admins register']
+		req.response.append(desc)
+		req.response.append('Usage: !admins register')
 	
 	else:
 		DB = riftBot.dbConnect()
@@ -78,17 +78,17 @@ def bot_admins_register(riftBot, req):
 		if admin:
 			# Check that they haven't already registered
 			if admin['playerId']:
-				req.response += ['Error: %s is already registered' % req.requester.title()]
+				req.response.append('Error: %s is already registered' % req.requester.title())
 				
 			else:
 				# Register their playerId
 				cursor.execute("UPDATE admins SET playerId=? WHERE player=?", (req.requesterId, req.requester))
-				req.response += ["%s's player ID has been registered" % req.requester.title()]
+				req.response.append("%s's player ID has been registered" % req.requester.title())
 				
 			DB.commit()
 		
 		else:
-			req.response += ['%s is not an admin' % req.requester.title()]
+			req.response.append('%s is not an admin' % req.requester.title())
 		
 		DB.close()
 		
@@ -97,12 +97,12 @@ def bot_admins_register(riftBot, req):
 # Remove an admin
 def bot_admins_remove(riftBot, req):
 	if not req.argList:
-		req.response += ['Usage: !admins rem character']
+		req.response.append('Usage: !admins rem character')
 		
 	elif req.argList[0] in ['-h', '--help']:
 		func, opts, desc = __admins_options__["rem"]
-		req.response += [desc]
-		req.response += ['Usage: !admins rem character']
+		req.response.append(desc)
+		req.response.append('Usage: !admins rem character')
 	
 	else:
 		DB = riftBot.dbConnect()
@@ -116,15 +116,15 @@ def bot_admins_remove(riftBot, req):
 				# Remove the admin, send a confirmation message
 				if cursor.execute("SELECT 1 FROM admins WHERE player=?", (arg.lower(),)).fetchone():
 					cursor.execute("DELETE FROM admins WHERE player=?", (arg.lower(),))
-					req.response += ['%s removed' % arg.title()]
+					req.response.append('%s removed' % arg.title())
 					
 				else:
-					req.response += ['%s is not an admin' % arg.title()]
+					req.response.append('%s is not an admin' % arg.title())
 				
 			DB.commit()
 			
 		else:
-			req.response += ['Managing admins must be done as a super user']
+			req.response.append('Managing admins must be done as a super user')
 		
 		DB.close()
 		
@@ -133,12 +133,12 @@ def bot_admins_remove(riftBot, req):
 # Execute a function as an admin
 def bot_su(riftBot, req):
 	if not req.argList:
-		req.response += ['Usage: !su [-user=player] function ..']
+		req.response.append('Usage: !su [-user=player] function ..')
 	
 	elif req.argList[0] in ['-h', '--help']:
 		func, opts, desc = __botFunctions__["su"]
-		req.response += [desc]
-		req.response += ['Usage: !su [-user=player] function ..']
+		req.response.append(desc)
+		req.response.append('Usage: !su [-user=player] function ..')
 		
 	else:
 		DB = riftBot.dbConnect()
@@ -150,8 +150,10 @@ def bot_su(riftBot, req):
 			if len(req.argList[0]) > 7 and req.argList[0][0:6] == "-user=":
 				req.requester = req.argList[0][6:].lower()
 				req.argList = req.argList[1:]
+				req.su = False
 				
-			req.su = True
+			else:
+				req.su = True
 				
 			# Get a new subfunction
 			func, opt, desc, req.argList = req.resolve_function(req.argList)
@@ -160,7 +162,7 @@ def bot_su(riftBot, req):
 				req = func(riftBot, req)
 				
 			else:
-				req.response += ['Function ' + req.argList[0] + ' not recognised']
+				req.response.append('Function ' + req.argList[0] + ' not recognised')
 				
 		elif cursor.execute("SELECT 1 FROM admins WHERE player=?", (req.requester,)).fetchone():
 			# The user is not yet fully authorised to run functions
@@ -168,13 +170,13 @@ def bot_su(riftBot, req):
 			if cursor.execute("SELECT 1 FROM admins WHERE player=?", (req.requester,)).fetchone():
 				# At this point it seems most likely that someone is trying to run su inside su
 				# So lets make a toothless threat that there is any kind of oversight (hilarious)
-				req.response += ['Player ID information resolved inconsistently, this request has been logged' % req.requester.title()]
+				req.response.append('Player ID information resolved inconsistently, this request has been logged' % req.requester.title())
 				
 			else:
-				req.response += ['%s has not registered']
+				req.response.append('%s has not registered')
 				
 		else:
-			req.response += ['%s is not an admin' % req.requester.title()]
+			req.response.append('%s is not an admin' % req.requester.title())
 			
 		DB.close()
 		

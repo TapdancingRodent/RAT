@@ -59,7 +59,7 @@ cursor.execute("DROP TABLE IF EXISTS ItemStats")
 cursor.execute("DROP TABLE IF EXISTS ItemCallings")
 cursor.execute("DROP TABLE IF EXISTS ItemSets")
 
-cursor.execute("CREATE TABLE Items (ItemKey VARCHAR(30) PRIMARY KEY, Name VARCHAR(50), Slot VARCHAR(20), ArmorType VARCHAR(25), Armor INT, Cooldown INT, OnUse VARCHAR(50), RequiredLevel INT, Rarity VARCHAR(10), Binding VARCHAR(20), CallingRequired INT DEFAULT 0, SetId INT, SetName VARCHAR(30), GivesSetBonus INT, Craftable INT DEFAULT 0)")
+cursor.execute("CREATE TABLE Items (ItemKey VARCHAR(30) PRIMARY KEY, Name VARCHAR(50), Slot VARCHAR(20), ArmorType VARCHAR(25), Armor INT, Cooldown INT, OnEquip VARCHAR(50), OnUse VARCHAR(50), RequiredLevel INT, Rarity VARCHAR(10), Binding VARCHAR(20), CallingRequired INT DEFAULT 0, SetId INT, SetName VARCHAR(30), GivesSetBonus INT, Craftable INT DEFAULT 0)")
 cursor.execute("CREATE TABLE ItemStats (ItemKey VARCHAR(30), Stat VARCHAR(50), StatValue INT)")
 cursor.execute("CREATE TABLE ItemCallings (ItemKey VARCHAR(30) PRIMARY KEY, Warrior INT, Cleric INT, Rogue INT, Mage INT)")
 cursor.execute("CREATE TABLE ItemSets (ItemKey VARCHAR(30), Pieces INT, Bonus VARCHAR(50))")
@@ -146,17 +146,21 @@ for event, item in xmlTree:
 		
 		spellPowerAdded = False
 		if item.find('OnEquip') is not None:
-			for stat in item.find('OnEquip')._children:
-				if stat.tag == "SpellPower":
+			for entry in item.find('OnEquip')._children:
+				if entry.tag == "SpellPower":
 					if spellDamage:
-						cursor.execute("INSERT INTO ItemStats VALUES (?,?,?)", (ItemKey, stat.tag, int(stat.text) + spellDamage))
+						cursor.execute("INSERT INTO ItemStats VALUES (?,?,?)", (ItemKey, entry.tag, int(entry.text) + spellDamage))
 						spellPowerAdded = True
 						
 					else:
-						cursor.execute("INSERT INTO ItemStats VALUES (?,?,?)", (ItemKey, stat.tag, stat.text))
-					
+						cursor.execute("INSERT INTO ItemStats VALUES (?,?,?)", (ItemKey, entry.tag, entry.text))
+				
+				elif entry.tag == "Ability":
+					itemQuery += ", OnEquip"
+					itemValue += (entry.find(language).text,)
+				
 				else:
-					cursor.execute("INSERT INTO ItemStats VALUES (?,?,?)", (ItemKey, stat.tag, stat.text))
+					cursor.execute("INSERT INTO ItemStats VALUES (?,?,?)", (ItemKey, entry.tag, entry.text))
 					
 		if spellDamage and not spellPowerAdded:
 			cursor.execute("INSERT INTO ItemStats VALUES (?,?,?)", (ItemKey, "SpellPower", spellDamage))

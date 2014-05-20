@@ -4,8 +4,8 @@ import riftChatBotUtils
 def bot_alts(riftBot, req):
 	if req.argList and req.argList[0] in ['-h', '--help']:
 		func, opts, desc = __botFunctions__["alts"]
-		req.response += [desc]
-		req.response += ['Options: %s' % ",".join(__alts_options__)]
+		req.response.append(desc)
+		req.response.append('Options: %s' % ",".join(__alts_options__))
 		return req
 		
 	return bot_alts_list(riftBot, req)
@@ -13,12 +13,12 @@ def bot_alts(riftBot, req):
 # Add an alt / alts
 def bot_alts_add(riftBot, req):
 	if not req.argList:
-		req.response += ['Usage: !alts add character [character ..]']
+		req.response.append('Usage: !alts add character [character ..]')
 		
 	elif req.argList[0] in ['-h', '--help']:
 		func, opts, desc = __alts_options__["add"]
-		req.response += [desc]
-		req.response += ['Usage: !alts add character [character ..]']
+		req.response.append(desc)
+		req.response.append('Usage: !alts add character [character ..]')
 				
 	else:
 		DB = riftBot.dbConnect()
@@ -42,17 +42,17 @@ def bot_alts_add(riftBot, req):
 					cursor.execute("DELETE FROM altConfirmations WHERE player=?", (req.requester,))
 					cursor.execute("INSERT OR REPLACE INTO alts VALUES (?,?)", (req.requester, group))
 					DB.commit()
-					req.response += ['%s confirmed' % req.requester.title()]
+					req.response.append('%s confirmed' % req.requester.title())
 				
 				# If no confirmation is pending register a request to join the group
 				else:
 					cursor.execute("INSERT OR REPLACE INTO altConfirmations VALUES (?,?,1,0)", (req.requester, group))
 					DB.commit()
-					req.response += ['%s added to group %i (requires confirmation)' % (req.requester.title(), group)]
+					req.response.append('%s added to group %i (requires confirmation)' % (req.requester.title(), group))
 				
 			else:
 				# Groups are inconsistent
-				req.response += ['Database Error: listed alts exist in multiple groups']
+				req.response.append('Database Error: listed alts exist in multiple groups')
 			
 		else:
 			# Look up the player in the alts database
@@ -67,12 +67,12 @@ def bot_alts_add(riftBot, req):
 					if confirmation and confirmation['playerConfirmed']:
 						cursor.execute("DELETE FROM altConfirmations WHERE player=?", (alt,))
 						cursor.execute("INSERT OR REPLACE INTO alts VALUES (?,?)", (alt, group))
-						req.response += ['%s confirmed' % alt.title()]
+						req.response.append('%s confirmed' % alt.title())
 					
 					# Otherwise register the group invite
 					else:
 						cursor.execute("INSERT OR REPLACE INTO altConfirmations VALUES (?,?,0,1)", (alt.lower(), group))
-						req.response += ['%s added to group %i (confirmation required)' % (alt.title(), group)]
+						req.response.append('%s added to group %i (confirmation required)' % (alt.title(), group))
 				
 				DB.commit()
 				
@@ -86,7 +86,7 @@ def bot_alts_add(riftBot, req):
 				cursor.execute("INSERT INTO alts VALUES(?,?)", (req.requester, group))
 				for alt in req.argList:
 					cursor.execute("INSERT OR REPLACE INTO altConfirmations VALUES (?,?,0,1)", (alt.lower(), group))
-					req.response += ['%s added to group %i (requires confirmation)' % (alt.title(), group)]
+					req.response.append('%s added to group %i (requires confirmation)' % (alt.title(), group))
 					
 				DB.commit()
 				
@@ -98,8 +98,8 @@ def bot_alts_add(riftBot, req):
 def bot_alts_list(riftBot, req):
 	if req.argList and req.argList[0] in ['-h', '--help']:
 		func, opts, desc = __alts_options__["list"]
-		req.response += [desc]
-		req.response += ['Usage: !alts list [character]']
+		req.response.append(desc)
+		req.response.append('Usage: !alts list [character]')
 	
 	else:
 		DB = riftBot.dbConnect()
@@ -119,13 +119,13 @@ def bot_alts_list(riftBot, req):
 			altGroup = altGroup['altGroup']
 			altList = cursor.execute("SELECT player FROM alts WHERE altGroup=? AND player<>?", (altGroup, main)).fetchall()
 			if altList:
-				req.response += ['%s has alts: %s' % (main.title(), ", ".join([alt['player'].title() for alt in altList]))]
+				req.response.append('%s has alts: %s' % (main.title(), ", ".join([alt['player'].title() for alt in altList])))
 				
 			else:
-				req.response += ['%s has no alts' % main.title()]
+				req.response.append('%s has no alts' % main.title())
 		
 		else:
-			req.response += ['%s not listed in alts database' % main.title()]
+			req.response.append('%s not listed in alts database' % main.title())
 		
 		DB.close()
 		
@@ -134,12 +134,12 @@ def bot_alts_list(riftBot, req):
 # De-register an alt
 def bot_alts_remove(riftBot, req):
 	if not req.argList:
-		req.response += ['Usage: !alts rem character [character ..]']
+		req.response.append('Usage: !alts rem character [character ..]')
 		
 	elif req.argList[0] in ['-h', '--help']:
 		func, opts, desc = __alts_options__["rem"]
-		req.response += [desc]
-		req.response += ['Usage: !alts rem character [character ..]']
+		req.response.append(desc)
+		req.response.append('Usage: !alts rem character [character ..]')
 	
 	else:
 		DB = riftBot.dbConnect()
@@ -156,21 +156,21 @@ def bot_alts_remove(riftBot, req):
 					if isAlt or req.su:
 						# Purge the alt from the database
 						cursor.execute("DELETE FROM alts WHERE player=? AND altGroup=?", (alt.lower(), altGroup))
-						req.response += ['%s removed from alts database' % alt]
+						req.response.append('%s removed from alts database' % alt)
 						
 					else:
 						# Try to purge the alt from the confirmations database
 						cursor.execute("DELETE FROM altConfirmations WHERE player=? AND altGroup=?", (alt.lower(), altGroup))
 						if cursor.rowcount > 0:
-							req.response += ["%s's join request has been removed" % alt.title()]
+							req.response.append("%s's join request has been removed" % alt.title())
 							
 						else:
-							req.response += ['No entry found for %s and %s' % (req.requester.title(), alt)]
+							req.response.append('No entry found for %s and %s' % (req.requester.title(), alt))
 				
 				DB.commit()
 				
 		else:
-			req.response += ['%s is not in the alts database' % main.title()]
+			req.response.append('%s is not in the alts database' % main.title())
 			
 		DB.close()
 		
@@ -179,12 +179,12 @@ def bot_alts_remove(riftBot, req):
 # Query if player is online
 def bot_is(riftBot, req):
 	if not req.argList:
-		req.response += ['Usage: !is character [character ...]']
+		req.response.append('Usage: !is character [character ...]')
 		
 	elif req.argList[0] in ['-h', '--help']:
 		func, opts, desc = __botFunctions__["is"]
-		req.response += [desc]
-		req.response += ['Usage: !is character [character ...]']
+		req.response.append(desc)
+		req.response.append('Usage: !is character [character ...]')
 		
 	else:
 		DB = riftBot.dbConnect()
@@ -234,19 +234,19 @@ def bot_is(riftBot, req):
 			
 			# Ordered by usefulness
 			if pS == 2:
-				req.response += ['%s is online' % players[p].title()]
+				req.response.append('%s is online' % players[p].title())
 				
 			elif altsOnline and altsOnline[0]:
-				req.response += ['%s is online as %s' % (players[p].title(), altsOnline[0].title())]
+				req.response.append('%s is online as %s' % (players[p].title(), altsOnline[0].title()))
 			
 			elif pS == 1:
-				req.response += ['%s is on mobile' % players[p].title()]
+				req.response.append('%s is on mobile' % players[p].title())
 				
 			elif altsMobile and altsMobile[0]:
-				req.response += ['%s is on mobile as %s' % (players[p].title(), altsOnline[0].title())]
+				req.response.append('%s is on mobile as %s' % (players[p].title(), altsOnline[0].title()))
 				
 			else:
-				req.response += ['%s is not online' % players[p].title()]
+				req.response.append('%s is not online' % players[p].title())
 		
 		DB.close()
 		

@@ -10,21 +10,21 @@ def bot_cq(riftBot, req):
 # Output server date
 def bot_date(riftBot, req):
 	dtdt = datetime.datetime
-	req.response += [dtdt.strftime(dtdt.utcnow(), '%d/%m/%y')]
+	req.response.append(dtdt.strftime(dtdt.utcnow(), '%d/%m/%y'))
 	return req
 		
 # Output server time
 def bot_time(riftBot, req):
 	dtdt = datetime.datetime
-	req.response += [dtdt.strftime(dtdt.utcnow(), '%X')]
+	req.response.append(dtdt.strftime(dtdt.utcnow(), '%X'))
 	return req
 
 # !timers is basically an alias for !timers list
 def bot_timers(riftBot, req):
 	if req.argList and req.argList[0] in ['-h', '--help']:
 		func, opts, desc = __botFunctions__["timers"]
-		req.response += [desc]
-		req.response += ['Options: %s' % ",".join(__timers_options__)]
+		req.response.append(desc)
+		req.response.append('Options: %s' % ",".join(__timers_options__))
 		return req
 		
 	return bot_timers_list(riftBot, req)
@@ -32,12 +32,12 @@ def bot_timers(riftBot, req):
 # Register a new timer
 def bot_timers_add(riftBot, req):
 	if not req.argList:
-		req.response += ['Usage: !timers add hh:mm[:ss]/[Ah][Bm][Cs]']
+		req.response.append('Usage: !timers add hh:mm[:ss]/[Ah][Bm][Cs]')
 		
 	elif req.argList[0] in ['-h', '--help']:
 		func, opts, desc = __timers_options__["add"]
-		req.response += [desc]
-		req.response += ['Usage: !timers add hh:mm[:ss]/[Ah][Bm][Cs]']
+		req.response.append(desc)
+		req.response.append('Usage: !timers add hh:mm[:ss]/[Ah][Bm][Cs]')
 		
 	else:
 		# Connect to the database
@@ -54,7 +54,7 @@ def bot_timers_add(riftBot, req):
 		if any([c in ['h','m','s'] for c in timeStr]):
 			# HHhMMmSSs
 			if ':' in timeStr:
-				req.response += ['Syntax Error']
+				req.response.append('Syntax Error')
 				
 			else:
 				h,m,s = [0,0,0]
@@ -77,7 +77,7 @@ def bot_timers_add(riftBot, req):
 					timerTime = now + countdown
 				
 				except ValueError:
-					req.response += ['Syntax Error']
+					req.response.append('Syntax Error')
 
 		elif ':' in timeStr and timeStr.count(":") < 3:
 			# HH:MM:SS
@@ -86,14 +86,14 @@ def bot_timers_add(riftBot, req):
 					fromMidnight = dtdt.strptime(timeStr, '%H:%M:%S').time()
 					
 				except ValueError:
-					req.response += ['Syntax Error']
+					req.response.append('Syntax Error')
 					
 			elif timeStr.count(":") == 1:
 				try:
 					fromMidnight = dtdt.strptime(timeStr, '%H:%M').time()
 					
 				except ValueError:
-					req.response += ['Syntax Error']
+					req.response.append('Syntax Error')
 			
 			# If we successfully parsed user input, convert to time to wait
 			if fromMidnight:
@@ -104,7 +104,7 @@ def bot_timers_add(riftBot, req):
 					countdown = timerTime - now
 				
 		else:
-			req.response += ['Syntax Error']
+			req.response.append('Syntax Error')
 		
 		# If a time to wait was successfully parsed
 		if countdown:
@@ -124,9 +124,9 @@ def bot_timers_add(riftBot, req):
 			timer = threading.Timer(countdown.total_seconds(), bot_timers_trigger, [riftBot, timerId])
 			timer.daemon = True
 			timer.start()
-			req.response += ['timer with ID %i due in %0.0fs' % (timerId, countdown.total_seconds())]
+			req.response.append('timer with ID %i due in %0.0fs' % (timerId, countdown.total_seconds()))
 			if not riftBot.appendTimer(timerId, timer):
-				req.response += ['Error: this timer is uninterruptible!']
+				req.response.append('Error: this timer is uninterruptible!')
 	
 		DB.close()
 		
@@ -136,8 +136,8 @@ def bot_timers_add(riftBot, req):
 def bot_timers_list(riftBot, req):
 	if req.argList and req.argList[0] in ['-h', '--help']:
 		func, opts, desc = __timers_options__["list"]
-		req.response += [desc]
-		req.response += ['Usage: !timers list [player]']
+		req.response.append(desc)
+		req.response.append('Usage: !timers list [player]')
 	
 	else:
 		# Default is the user
@@ -155,10 +155,10 @@ def bot_timers_list(riftBot, req):
 		if timers:
 			for timer in timers:
 				countdown = datetime.datetime.strptime(timer['timeStamp'], '%c') - datetime.datetime.utcnow()
-				req.response += ['Timer %i: %s due in %is' % (timer['timerId'], timer['message'], countdown.total_seconds())]
+				req.response.append('Timer %i: %s due in %is' % (timer['timerId'], timer['message'], countdown.total_seconds()))
 		
 		else:
-			req.response += ['%s has no pending timers' % main.title()]
+			req.response.append('%s has no pending timers' % main.title())
 		
 		DB.close()
 		
@@ -167,12 +167,12 @@ def bot_timers_list(riftBot, req):
 # Remove a pending timer
 def bot_timers_remove(riftBot, req):
 	if not req.argList:
-		req.response += ['Usage: !timers rem ID [ID ..]']
+		req.response.append('Usage: !timers rem ID [ID ..]')
 		
 	elif req.argList[0] in ['-h', '--help']:
 		func, opts, desc = __timers_options__["rem"]
-		req.response += [desc]
-		req.response += ['Usage: !timers rem ID [ID ..]']
+		req.response.append(desc)
+		req.response.append('Usage: !timers rem ID [ID ..]')
 	
 	else:
 		# Load the timers database
@@ -191,21 +191,21 @@ def bot_timers_remove(riftBot, req):
 						# Remove the timer from the database and cancel the timer function
 						cursor.execute("DELETE FROM timers WHERE timerId=?", (int(arg),))
 						if cursor.rowcount > 0 and riftBot.removeTimer(int(arg)):
-							req.response += ['Timer %s removed' % arg]
+							req.response.append('Timer %s removed' % arg)
 							DB.commit()
 							
 						else:
-							req.response += ['Error: Removal of timer %s failed' % arg]
+							req.response.append('Error: Removal of timer %s failed' % arg)
 							DB.rollback()
 							
 					else:
-						req.response += ['%s does not own timer %s' % (req.requester.title(), arg)]
+						req.response.append('%s does not own timer %s' % (req.requester.title(), arg))
 					
 				except ValueError:
-					req.response += ['%s is not a valid timer ID' % arg]
+					req.response.append('%s is not a valid timer ID' % arg)
 						
 			else:
-				req.response += ['No timer pending with ID %s' % arg]
+				req.response.append('No timer pending with ID %s' % arg)
 			
 		DB.close()
 		
@@ -229,7 +229,7 @@ def bot_timers_trigger(riftBot, timerId):
 		if timerInfo['sendGuild'] == 1:
 			req.toGuild = True
 		req.toWhisp = True
-		req.response += ["%s's Timer: %s" % (timerInfo['player'].title(), timerInfo['message'])]
+		req.response.append("%s's Timer: %s" % (timerInfo['player'].title(), timerInfo['message']))
 		
 		# Remove the timer from the database
 		cursor.execute("DELETE FROM timers WHERE timerId=?", (timerId,))
@@ -240,7 +240,7 @@ def bot_timers_trigger(riftBot, timerId):
 		# Something has gone awfully wrong
 		req.toGuild = True
 		req.toWhisp = False
-		req.response += ['Error: An orphaned timer was triggered']
+		req.response.append('Error: An orphaned timer was triggered')
 	
 	DB.close()
 		
@@ -254,11 +254,6 @@ def __bot_init__(riftBot):
 		
 	cursor.execute("CREATE TABLE IF NOT EXISTS timers (timerId INT PRIMARY KEY, player VARCHAR(30), playerId VARCHAR(30), sendGuild INT, message VARCHAR(255), timeStamp VARCHAR(30))")
 	cursor.execute("CREATE TABLE IF NOT EXISTS admins (player VARCHAR(30) PRIMARY KEY, playerId VARCHAR(30))")
-	
-	# Backwards compatibility patch-esque-ness
-	cols = [col[1] for col in cursor.execute("PRAGMA table_info(timers)").fetchall()]
-	if not 'timeStamp' in cols:
-		cursor.execute("ALTER TABLE timers ADD COLUMN timeStamp VARCHAR(30) DEFAULT '01/01/00'")
 	
 	# Retrieve old timers (i.e. in case we just crashed)
 	timers = cursor.execute("SELECT * FROM timers").fetchall()

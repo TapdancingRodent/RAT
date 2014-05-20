@@ -27,24 +27,24 @@ def evaluate(input):
 # Perform mathematical calculations
 def bot_calc(riftBot, req):
 	if not req.argList:
-		req.response += ['Usage: !calc expr']
+		req.response.append('Usage: !calc expr')
 		
 	elif req.argList[0] in ['-h', '--help']:
 		func, opts, desc = __botFunctions__["calc"]
-		req.response += [desc]
-		req.response += ['Usage: !calc expr']
+		req.response.append(desc)
+		req.response.append('Usage: !calc expr')
 	
 	else:
 		# Try to evaluate the calculation (with spaces removed)
 		try:
-			req.response += [evaluate("".join(req.argList))]
+			req.response.append(evaluate("".join(req.argList)))
 		except TypeError:
-			req.response += ['Syntax Error']
+			req.response.append('Syntax Error')
 		except SyntaxError:
 			if any('x' in arg for arg in req.argList):
-				req.response += ['Syntax Error: Use * for multiplication']
+				req.response.append('Syntax Error: Use * for multiplication')
 			else:
-				req.response += ['Syntax Error']
+				req.response.append('Syntax Error')
 				
 	return req
 
