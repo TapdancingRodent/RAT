@@ -18,7 +18,7 @@ Some examples of current functionality:
     * N.B. Items are stored in a database named discoveries.db which is created from Trion's published discoveries database (available at ftp://ftp.trionworlds.com/rift/data/) using the included parseDiscoveries.py
 
 With version 1.1, RAT is equipped to handle DKP tables. To get started, you'll need to register at least one player as an admin using the script addAdmin.py to allow use of the !su (superuser) command:  
-    ./addAdmin bot_name.db player
+     ./addAdmin bot_name.db player
 
 Managing tables is performed using the "!dkp tables" subfunctions, support exists for the following dkp systems:
 - suicide
@@ -26,7 +26,7 @@ Managing tables is performed using the "!dkp tables" subfunctions, support exist
 - plain
 
 For instance:  
-    !su dkp tables add suicide 10man "Loot table for 10 man instances"
+     !su dkp tables add suicide 10man "Loot table for 10 man instances"
 
 Managing raiders within tables and changing of players' dkp is done using the "!dkp raiders" and "!dkp modify" subfunctions.
 
