@@ -1093,12 +1093,12 @@ def bot_dkp_tables_backup(dbName):
 # Add a DKP table
 def bot_dkp_tables_create(riftBot, req):
 	if not req.argList:
-		req.response.append('Usage: !su dkp tables add [-commit] type name description')
+		req.response.append('Usage: !su dkp tables create [-commit] type name description')
 		
 	elif req.argList[0] in ['-h', '--help']:
-		func, opts, desc = __tables_options__["add"]
+		func, opts, desc = __tables_options__["create"]
 		req.response.append(desc)
-		req.response.append('Usage: !su dkp tables add [-commit] type name description')
+		req.response.append('Usage: !su dkp tables create [-commit] type name description')
 		
 	else:
 		# Connect to the database
