@@ -1,7 +1,8 @@
-import sys, pkgutil, os
+import sys, pkgutil, os, datetime
 import riftChatBotUtils, botFunctionModules
 
 # A split function which preserves quotes substring
+msg = "some text and <a href='something else'>tag</a> as well"
 def intelliSplit(msg):
 	n = 0
 	args = []
@@ -9,31 +10,30 @@ def intelliSplit(msg):
 	while n < len(msg):
 		if msg[n] == '\\':
 			n += 1
-		
 		elif msg[n] == '"':
 			if quoteStack and quoteStack[-1] == '"':
 				quoteStack.pop()
-				
 			else:
 				quoteStack.append('"')
-		
 		elif msg[n] == "'":
 			if quoteStack and quoteStack[-1] == "'":
 				quoteStack.pop()
-				
 			else:
 				quoteStack.append("'")
-			
+		elif msg[n] == "<":
+			nextSpace = msg[n+1:].find(" ")
+			if nextSpace and not any([c in ['"', "'"] for c in msg[n+1:n+1+nextSpace]]):
+				tag = msg[n+1:n+1+nextSpace]
+				endXML = msg[n+1:].find("</%s>" % tag)
+				if endXML > 0:
+					n += endXML
 		elif not quoteStack and msg[n] == " ":
 			args.append(msg[0:n])
 			msg = msg[n+1:]
-			n = 0
-		
+			n = -1
 		n += 1
-	
 	if msg:
 		args.append(msg)
-	
 	return args
 
 # Look up a function (including sub-options)
@@ -111,7 +111,7 @@ if __name__ == "__main__":
 		if req:
 			numRetries = 0
 			req.resolve_function = resolve_function
-			print 'Received message: ' + req.message
+			print '[%s] Received message: %s' % (datetime.datetime.utcnow().strftime('%c'), req.message)
 			
 			# Parse the request
 			req.argList = [arg.replace('"', '').replace("'", "") for arg in intelliSplit(req.message)]
