@@ -32,4 +32,5 @@ Managing raiders within tables and changing of players' dkp is done using the "!
 
 Requirements:
 * python 2.7+
+* requests module (maybe)
 	

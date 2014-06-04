@@ -2,6 +2,8 @@ import sys
 import sqlite3
 
 # Add a sudoer to the specified database
+# Usage:
+# $> python addAdmin bot_name.db Sardines
 if len(sys.argv) != 3:
 	sys.exit('Please supply a database and player name')
 
