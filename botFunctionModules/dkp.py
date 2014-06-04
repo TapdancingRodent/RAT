@@ -1,5 +1,7 @@
 import riftChatBotUtils
-import os, datetime, sqlite3, shutil, random, sets
+import os, datetime, sqlite3, shutil, random, sys
+if sys.version_info < (3,0):
+	from sets import Set as set
 from contextlib import closing
 
 __dkpSystems__ = ['suicide', 'zerosum', 'plain']
@@ -76,8 +78,6 @@ def bot_dkp_modify_add(riftBot, req):
 						
 						else:
 							break
-					
-					print playersList
 					
 					if dkpChange is not None:
 						# Connect to the database
@@ -361,8 +361,8 @@ def bot_dkp_modify_reassign(riftBot, req):
 							lList = [arg.lower() for arg in req.argList[2+n+1:]]
 							break
 					
-					gSet = sets.Set(gList)
-					lSet = sets.Set(lList)
+					gSet = set(gList)
+					lSet = set(lList)
 					
 					if gChange is not None:
 						# Load the dkp database
@@ -385,7 +385,7 @@ def bot_dkp_modify_reassign(riftBot, req):
 										bot_dkp_tables_backup('%s_%s' % (riftBot.charName, name))
 								
 								activeRaiders = [aR['player'] for aR in dkpCursor.execute("SELECT * FROM activeRaiders").fetchall()]
-								aRSet = sets.Set(activeRaiders)
+								aRSet = set(activeRaiders)
 								
 								itsAllGood = True
 								# Do some sanity checks
@@ -1125,37 +1125,41 @@ def bot_dkp_tables_create(riftBot, req):
 				if type in __dkpSystems__:
 					if not "_" in name and not "." in name:
 						if not os.path.exists('%s/%s_%s.db' % (dkpDir, riftBot.charName, name)):
-							cursor.execute("INSERT INTO dkpTransactions VALUES (?,?,?,?,?,?)", (name, 0, req.requester, req.requesterId, "dkp tables add %s" % (" ".join(req.argList)), datetime.datetime.utcnow().strftime('%c')))
-							
-							# Connect to the new DKP database
-							with closing(sqlite3.connect('%s/%s_%s.db' % (dkpDir, riftBot.charName, name))) as dkpDB:
-								dkpDB.row_factory = sqlite3.Row
-								dkpCursor = dkpDB.cursor()
+							if os.access('%s/%s_%s.db' % (dkpDir, rifbot.charName, name), os.W_OK):
+								cursor.execute("INSERT INTO dkpTransactions VALUES (?,?,?,?,?,?)", (name, 0, req.requester, req.requesterId, "dkp tables add %s" % (" ".join(req.argList)), datetime.datetime.utcnow().strftime('%c')))
 								
-								# Initialise a couple of tables and a shed load of useful views, set metadata
-								dkpCursor.execute("CREATE TABLE IF NOT EXISTS metadata (type VARCHAR(10), description VARCHAR(255), currentTransaction INT)")
-								dkpCursor.execute("INSERT INTO metadata VALUES (?, ?, 0)", (type, desc))
-								dkpCursor.execute("CREATE TABLE IF NOT EXISTS history (player VARCHAR(30), dkpChange REAL, reason VARCHAR(30), notes VARCHAR(255), transactionId INT)")
-								dkpCursor.execute("CREATE TABLE IF NOT EXISTS raiders (player VARCHAR(30), active INT, transactionId INT)")
-								dkpCursor.execute("CREATE VIEW IF NOT EXISTS activeRaiders AS SELECT player FROM (SELECT player, active, MAX(transactionId) FROM raiders WHERE transactionId<=(SELECT currentTransaction FROM metadata LIMIT 1) GROUP BY player) WHERE active=1")
-								dkpCursor.execute("CREATE VIEW IF NOT EXISTS currentHistory AS SELECT player, dkpChange, reason, notes, transactionId FROM activeRaiders JOIN history USING (player) WHERE transactionId<=(SELECT currentTransaction FROM metadata LIMIT 1)")
-								dkpCursor.execute("CREATE VIEW IF NOT EXISTS currentDkp AS SELECT player, SUM(dkpChange) AS dkp FROM activeRaiders JOIN history USING (player) WHERE transactionId<=(SELECT currentTransaction FROM metadata LIMIT 1) GROUP BY player ORDER BY dkp DESC")
-								dkpCursor.execute("CREATE VIEW IF NOT EXISTS unusedIndexes AS SELECT cD1.dkp+1 AS i FROM currentDkp AS cD1 LEFT OUTER JOIN currentDkp AS cD2 ON cD1.dkp+1 = cD2.dkp WHERE cD2.dkp IS NULL")
-								
-								if confirmed:
-									DB.commit()
-									dkpDB.commit()
+								# Connect to the new DKP database
+								with closing(sqlite3.connect('%s/%s_%s.db' % (dkpDir, riftBot.charName, name))) as dkpDB:
+									dkpDB.row_factory = sqlite3.Row
+									dkpCursor = dkpDB.cursor()
 									
-								else:
-									DB.rollback()
-									dkpDB.rollback()
+									# Initialise a couple of tables and a shed load of useful views, set metadata
+									dkpCursor.execute("CREATE TABLE IF NOT EXISTS metadata (type VARCHAR(10), description VARCHAR(255), currentTransaction INT)")
+									dkpCursor.execute("INSERT INTO metadata VALUES (?, ?, 0)", (type, desc))
+									dkpCursor.execute("CREATE TABLE IF NOT EXISTS history (player VARCHAR(30), dkpChange REAL, reason VARCHAR(30), notes VARCHAR(255), transactionId INT)")
+									dkpCursor.execute("CREATE TABLE IF NOT EXISTS raiders (player VARCHAR(30), active INT, transactionId INT)")
+									dkpCursor.execute("CREATE VIEW IF NOT EXISTS activeRaiders AS SELECT player FROM (SELECT player, active, MAX(transactionId) FROM raiders WHERE transactionId<=(SELECT currentTransaction FROM metadata LIMIT 1) GROUP BY player) WHERE active=1")
+									dkpCursor.execute("CREATE VIEW IF NOT EXISTS currentHistory AS SELECT player, dkpChange, reason, notes, transactionId FROM activeRaiders JOIN history USING (player) WHERE transactionId<=(SELECT currentTransaction FROM metadata LIMIT 1)")
+									dkpCursor.execute("CREATE VIEW IF NOT EXISTS currentDkp AS SELECT player, SUM(dkpChange) AS dkp FROM activeRaiders JOIN history USING (player) WHERE transactionId<=(SELECT currentTransaction FROM metadata LIMIT 1) GROUP BY player ORDER BY dkp DESC")
+									dkpCursor.execute("CREATE VIEW IF NOT EXISTS unusedIndexes AS SELECT cD1.dkp+1 AS i FROM currentDkp AS cD1 LEFT OUTER JOIN currentDkp AS cD2 ON cD1.dkp+1 = cD2.dkp WHERE cD2.dkp IS NULL")
 									
-								dkpDB.close()
-								
-								if not confirmed:
-									os.remove('%s/%s_%s.db' % (dkpDir, riftBot.charName, name))
+									if confirmed:
+										DB.commit()
+										dkpDB.commit()
+										
+									else:
+										DB.rollback()
+										dkpDB.rollback()
+										
+									dkpDB.close()
 									
-								req.response.append('Created table: %s' % name)
+									if not confirmed:
+										os.remove('%s/%s_%s.db' % (dkpDir, riftBot.charName, name))
+										
+									req.response.append('Created table: %s' % name)
+						
+							else:
+								req.response.append('Error: Could not create table with name %s' % name)
 						
 						else:
 							req.response.append('Error: A table with name %s already exists' % name)
